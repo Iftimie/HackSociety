@@ -22,13 +22,15 @@ public:
     static cv::Mat* storeGetImage(cv::Mat *img, char* action, int slot);
 
 private slots:
-    void on_pushButton_clicked();
     void on_imageWebcamChanged();
 
 
 private:
     Ui::MainWindow *ui;
     ThreadWebCam *threadWebcam;
+
+    void saveBinarizationParams(int hmin, int hmax, int smin, int smax, int vmin, int vmax);
+    void loadBinarizationParams(int& hmin, int& hmax, int& smin, int& smax, int& vmin, int& vmax);
 };
 
 #endif // MAINWINDOW_H

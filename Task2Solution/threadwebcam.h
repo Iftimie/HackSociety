@@ -9,6 +9,9 @@ class ThreadWebCam : public QThread{
     Q_OBJECT
 public:
     static bool running;
+
+
+
 public:
     ThreadWebCam(QObject *parent );
 

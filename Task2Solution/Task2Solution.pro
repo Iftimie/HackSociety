@@ -14,7 +14,8 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    threadwebcam.cpp
+    threadwebcam.cpp \
+    threadanalize.cpp
 
 INCLUDEPATH +=C:/OpenCV2410/opencv/build/include
 LIBS +=-LC:/OpenCV2410/opencv/build/x64/vc12/lib \
@@ -44,6 +45,7 @@ blas_win64_MT.lib \
 lapack_win64_MT.lib
 
 HEADERS  += mainwindow.h \
-    threadwebcam.h
+    threadwebcam.h \
+    threadanalize.h
 
 FORMS    += mainwindow.ui

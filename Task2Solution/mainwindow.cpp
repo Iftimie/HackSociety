@@ -34,9 +34,34 @@ void MainWindow::on_imageWebcamChanged(){
     delete resized1;
 }
 
-void MainWindow::on_pushButton_clicked()
+void MainWindow::saveBinarizationParams(int hmin, int hmax, int smin, int smax, int vmin, int vmax)
 {
+    FILE *f = fopen("bin_params.txt","s");
+        if(!f){
+            printf("error opening bin_params.txt for writting");
+        }else {
+           fprintf(f,"%d \n",hmin);fprintf(f,"%d \n",hmax);
+           fprintf(f,"%d \n",smin);fprintf(f,"%d \n",smax);
+           fprintf(f,"%d \n",vmin);fprintf(f,"%d \n",vmax);
+           fclose(f);
+        }
+}
 
+void MainWindow::loadBinarizationParams(int& hmin, int& hmax, int& smin, int& smax, int& vmin, int& vmax)
+{
+    FILE *f = fopen("bin_params.txt", "r");
+        if(!f)
+        {
+            printf("error opening bin_params for reading");
+        } else
+        {
+            fscanf(f,"%d \n",hmin);fscanf(f,"%d \n",hmax);
+            fscanf(f,"%d \n",smin);fscanf(f,"%d \n",smax);
+            fscanf(f,"%d \n",vmin);fscanf(f,"%d \n",vmax);
+
+            // to do UI actualization
+            fclose(f);
+        }
 }
 
 cv::Mat* MainWindow::storeGetImage(cv::Mat *img, char* action,int slot){

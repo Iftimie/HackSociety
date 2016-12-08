@@ -4,6 +4,7 @@
 
 bool ThreadWebCam::running=true;
 
+
 ThreadWebCam::ThreadWebCam(QObject *parent):QThread(parent){
 
 }
