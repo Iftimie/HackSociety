@@ -4,6 +4,7 @@
 #include <QtCore>
 #include <QtWidgets/QMainWindow>
 #include <opencv2/core/core.hpp>
+
 using namespace cv;
 
 class ThreadAnalize : public QThread{

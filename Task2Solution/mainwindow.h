@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <threadwebcam.h>
 #include <opencv2/core/core.hpp>
+#include "threadanalize.h"
 using namespace cv;
 
 namespace Ui {
@@ -19,15 +20,24 @@ public:
     ~MainWindow();
     static Mat image0;
     static Mat image1;
-    static cv::Mat* storeGetImage(cv::Mat *img, char* action, int slot);
+    static Mat* storeGetImage(Mat *img, char* action, int slot);
+    static Mat procImage0;
+    static Mat procImage1;
+    static Mat* storeGetProcImage(Mat *img, char* action, int slot);
 
 private slots:
     void on_imageWebcamChanged();
+    void on_analizeBinaryResult();
 
+
+    void on_btnSaveParams_clicked();
+
+    void on_btnLoadParams_clicked();
 
 private:
     Ui::MainWindow *ui;
     ThreadWebCam *threadWebcam;
+    ThreadAnalize *threadAnalize;
 
     void saveBinarizationParams(int hmin, int hmax, int smin, int smax, int vmin, int vmax);
     void loadBinarizationParams(int& hmin, int& hmax, int& smin, int& smax, int& vmin, int& vmax);

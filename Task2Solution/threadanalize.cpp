@@ -26,7 +26,8 @@ void ThreadAnalize::run(){
         colorFilter(*image0,hsv0);
         colorFilter(*image1,hsv1);
 
-
+        MainWindow::storeGetProcImage(&hsv0,"EN",0);
+        MainWindow::storeGetProcImage(&hsv1,"EN",1);
         emit analizeBinaryResult();
 
         delete image0;

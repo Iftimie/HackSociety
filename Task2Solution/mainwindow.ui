@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>621</width>
-    <height>402</height>
+    <width>861</width>
+    <height>488</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -55,6 +55,9 @@
       <height>22</height>
      </rect>
     </property>
+    <property name="maximum">
+     <number>255</number>
+    </property>
     <property name="orientation">
      <enum>Qt::Horizontal</enum>
     </property>
@@ -67,6 +70,9 @@
       <width>160</width>
       <height>22</height>
      </rect>
+    </property>
+    <property name="maximum">
+     <number>255</number>
     </property>
     <property name="orientation">
      <enum>Qt::Horizontal</enum>
@@ -81,6 +87,9 @@
       <height>22</height>
      </rect>
     </property>
+    <property name="maximum">
+     <number>255</number>
+    </property>
     <property name="orientation">
      <enum>Qt::Horizontal</enum>
     </property>
@@ -93,6 +102,9 @@
       <width>160</width>
       <height>22</height>
      </rect>
+    </property>
+    <property name="maximum">
+     <number>255</number>
     </property>
     <property name="orientation">
      <enum>Qt::Horizontal</enum>
@@ -107,6 +119,9 @@
       <height>22</height>
      </rect>
     </property>
+    <property name="maximum">
+     <number>255</number>
+    </property>
     <property name="orientation">
      <enum>Qt::Horizontal</enum>
     </property>
@@ -119,6 +134,9 @@
       <width>160</width>
       <height>22</height>
      </rect>
+    </property>
+    <property name="maximum">
+     <number>255</number>
     </property>
     <property name="orientation">
      <enum>Qt::Horizontal</enum>
@@ -202,13 +220,71 @@
      <string>VMax</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="btnSaveParams">
+    <property name="geometry">
+     <rect>
+      <x>240</x>
+      <y>170</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Save Params</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnLoadParams">
+    <property name="geometry">
+     <rect>
+      <x>240</x>
+      <y>200</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Load Params</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="resultTop">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>170</y>
+      <width>161</width>
+      <height>91</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Box</enum>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="resultSide">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>270</y>
+      <width>161</width>
+      <height>91</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Box</enum>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>621</width>
+     <width>861</width>
      <height>21</height>
     </rect>
    </property>
