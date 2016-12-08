@@ -18,6 +18,7 @@ ThreadAnalize::ThreadAnalize(QObject *parent):QThread(parent){
 
 void ThreadAnalize::run(){
 
+    QThread::msleep(1000);
     while(running){
         Mat *image0 = MainWindow::storeGetImage(nullptr,"EX",0);
         Mat *image1 = MainWindow::storeGetImage(nullptr,"EX",1);
