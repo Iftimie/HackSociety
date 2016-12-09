@@ -23,17 +23,24 @@ public:
     static int blur;
     static bool startRecord;
     static vector<Point2f> shapePoints;
+    static char grid[11][11];
+    static int nextPos;
+    static int touchPosition;
 
 public:
     ThreadAnalize(QObject *parent );
     void colorFilter(Mat &frame,Mat &hsv);
     void findBiggestBlob(cv::Mat & matImage,cv::Rect &bounding_rect);
+    void nextPosition(int x,int y,int width,int height);
+    void touch(int x,int y,int width,int height);
 
 
     void run();
 
 signals:
     void analizeBinaryResult();
+    void classify();
+    void displayShape();
 };
 
 #endif // THREADANALIZE_H

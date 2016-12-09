@@ -23,6 +23,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     this->threadAnalize = new ThreadAnalize(this);
     connect(this->threadAnalize,SIGNAL(analizeBinaryResult()),this,SLOT(on_analizeBinaryResult()));
+    connect(this->threadAnalize,SIGNAL(classify()),this,SLOT(on_classify()));
+    connect(this->threadAnalize,SIGNAL(displayShape()),this,SLOT(on_displayShape()));
     this->threadAnalize->start();
 
     strcpy(this->outputVector,"1 0 0 0 0 0 0");
@@ -37,8 +39,10 @@ MainWindow::~MainWindow()
 void MainWindow::on_imageWebcamChanged(){
     Mat *resized0 =MainWindow::storeGetImage(nullptr,"EX",0);
     Mat *resized1 =MainWindow::storeGetImage(nullptr,"EX",1);
+    cv::rectangle(*resized1,Rect(40,40,resized1->cols-40,resized1->rows-40),Scalar(0,255,0),1,8,0);
     cvtColor(*resized0, *resized0, CV_BGR2RGB);
     cvtColor(*resized1, *resized1, CV_BGR2RGB);
+
     QImage imdisplay0((uchar*)resized0->data, resized0->cols, resized0->rows, resized0->step, QImage::Format_RGB888); //Converts the CV image into Qt standard format
     QImage imdisplay1((uchar*)resized1->data, resized1->cols, resized1->rows, resized1->step, QImage::Format_RGB888);
     int w = this->ui->top->width();
@@ -78,6 +82,7 @@ void MainWindow::saveBinarizationParams(int hmin, int hmax, int smin, int smax, 
            fprintf(f,"%d \n",smin);fprintf(f,"%d \n",smax);
            fprintf(f,"%d \n",vmin);fprintf(f,"%d \n",vmax);
            fprintf(f,"%d \n",erosin);fprintf(f,"%d \n",ThreadAnalize::blur);
+           fprintf(f,"%d \n",ThreadAnalize::touchPosition);
            fclose(f);
         }
 }
@@ -94,8 +99,19 @@ void MainWindow::loadBinarizationParams(int& hmin, int& hmax, int& smin, int& sm
             fscanf(f,"%d \n",&smin);fscanf(f,"%d \n",&smax);
             fscanf(f,"%d \n",&vmin);fscanf(f,"%d \n",&vmax);
             fscanf(f,"%d \n",&erosin);fscanf(f,"%d \n",&ThreadAnalize::blur);
+            fscanf(f,"%d \n",&ThreadAnalize::touchPosition);
 
             // to do UI actualization
+            this->ui->sliMinH->setValue(hmin);
+            this->ui->sliMaxH->setValue(hmax);
+            this->ui->sliMinS->setValue(smin);
+            this->ui->sliMaxS->setValue(smax);
+            this->ui->sliMinV->setValue(vmin);
+            this->ui->sliMaxV->setValue(vmax);
+
+            this->ui->horizontalSlider->setValue(erosin);
+            this->ui->horizontalSlider_2->setValue(ThreadAnalize::blur);
+            this->ui->horizontalSlider_3->setValue(ThreadAnalize::touchPosition);
             fclose(f);
         }
 }
@@ -198,48 +214,8 @@ void MainWindow::on_startRecord_clicked()
     }else{
         ThreadAnalize::startRecord=false;
         this->ui->startRecord->setText("Start Record");
-        int minX=99999;
-        int minY=99999;
-        int maxX=0;
-        int maxY=0;
-        for(int i=0;i<ThreadAnalize::shapePoints.size();i++){
-            if(ThreadAnalize::shapePoints[i].x<minX){
-                minX =ThreadAnalize::shapePoints[i].x;
-            }
-            if(ThreadAnalize::shapePoints[i].x>maxX){
-                maxX = ThreadAnalize::shapePoints[i].x;
-            }
-            if(ThreadAnalize::shapePoints[i].y<minY){
-                minY = ThreadAnalize::shapePoints[i].y;
-            }
-            if(ThreadAnalize::shapePoints[i].y>maxY){
-                maxY = ThreadAnalize::shapePoints[i].y;
-            }
-        }
-
-        int diffX = maxX-minX;
-        int diffY = maxY-minY;
-        int width = diffX*1.2;
-        int height = diffY*1.2;
-
-        int offsetX = (width-diffX)/2;
-        int offsetY = (height-diffY)/2;
-
-        for(int i=0;i<ThreadAnalize::shapePoints.size();i++){
-            ThreadAnalize::shapePoints[i].x-=minX;
-            ThreadAnalize::shapePoints[i].y-=minY;
-            ThreadAnalize::shapePoints[i].x+=offsetX;
-            ThreadAnalize::shapePoints[i].y+=offsetY;
-        }
-        Mat img(height, width, CV_8U);
-        img = cv::Scalar(255);
-        cv::cvtColor(img,img,COLOR_GRAY2BGR);
-        circle(img, Point2f(ThreadAnalize::shapePoints[0].x,ThreadAnalize::shapePoints[0].y), 3, cv::Scalar(0, 0, 0), -1, 8);
-        for(int i=1;i<ThreadAnalize::shapePoints.size();i++){
-            cv::line(img, ThreadAnalize::shapePoints[i-1], ThreadAnalize::shapePoints[i], cv::Scalar(0, 0, 0), 3, 8,0);
-        }
-        GaussianBlur( img, img, Size( ThreadAnalize::blur, ThreadAnalize::blur ), 0, 0 );
-        cv::imshow("reuslt",GetSquareImage(img,100));
+        Mat result = fromPointsToMat();
+        cv::imshow("reuslt",result);
         cv::waitKey(30);
     }
 }
@@ -472,7 +448,7 @@ Mat MainWindow::translateImg(Mat &img, int offsetx, int offsety){
                cv::INTER_LINEAR,
                cv::BORDER_CONSTANT,
                cv::Scalar(255, 255, 255));
-    return trans_mat;
+    return img;
 }
 
 void MainWindow::on_btnTrain_clicked()
@@ -483,13 +459,19 @@ void MainWindow::on_btnTrain_clicked()
     sizes(0,2)=30;
     sizes(0,3)=7;
     this->net = new Neural(sizes);
-    vector<arma::Mat<double>> training_data;
-    loadDetectionData(training_data);
-    this->net->SGD(training_data,30,10,0.03,5,true,true,false,false);
+    this->threadTrainer = new ThreadTrainer(this);
+    connect(this->threadTrainer,SIGNAL(FinishedTrainingNeural()),this,SLOT(on_FinishedTrainingNeural()));
+    this->threadTrainer->start();
+
+}
+
+void MainWindow::on_FinishedTrainingNeural(){
+    QThread::msleep(1000);
+    delete this->threadTrainer;
+    this->threadTrainer = nullptr;
     QMessageBox msg;
     msg.setText("Training Complete");
     msg.exec();
-
 }
 
 void MainWindow::on_doubleSpinBox_valueChanged(double arg1)
@@ -605,4 +587,84 @@ void MainWindow::on_btnWhite_clicked()
     MyLabel::img = Mat(300, 300, CV_8U);
     MyLabel::img = cv::Scalar(255);
     cv::cvtColor(MyLabel::img,MyLabel::img,COLOR_GRAY2BGR);
+}
+
+void MainWindow::on_horizontalSlider_3_valueChanged(int value)
+{
+    ThreadAnalize::touchPosition = value;
+}
+
+void MainWindow::on_classify(){
+
+    Mat inputNeural = fromPointsToMat();
+    ThreadAnalize::shapePoints.clear();
+    int inputSize=10000;
+    arma::Mat<double> b(inputSize, 1); b.fill(255);
+    arma::Mat<double> c(inputSize, 1); c.fill(1);
+    cv::resize(inputNeural,inputNeural,Size(100,100));
+    cv::cvtColor(inputNeural,inputNeural,CV_RGB2GRAY); //when i saved it was CV_GRAY2RGB
+    std::vector<double> vec;
+    for (int i = 0; i < inputNeural.rows; ++i) {
+        vec.insert(vec.end(), (uchar*)inputNeural.ptr<uchar>(i), (uchar*)inputNeural.ptr<uchar>(i)+inputNeural.cols);
+    }
+    arma::Mat<double> image(vec);
+    image = (image+c) / b;
+    arma::Mat<double> output = this->net->feedForward(image);
+    int resultClass = output.index_max();
+    qDebug()<<"Result class "<<resultClass;
+}
+
+void MainWindow::on_displayShape(){
+    Mat image = fromPointsToMat();
+    cvtColor(image, image, CV_BGR2RGB);
+    QImage imageDisplay((uchar*)image.data, image.cols, image.rows, image.step, QImage::Format_RGB888); //Converts the CV image into Qt standard format
+    int w = this->ui->resultTop->width();
+    int h = this->ui->resultTop->height();
+    this->ui->resultTop->setPixmap(QPixmap::fromImage(imageDisplay).scaled(w,h,Qt::KeepAspectRatio));
+}
+
+cv::Mat MainWindow::fromPointsToMat(){
+    int minX=99999;
+    int minY=99999;
+    int maxX=0;
+    int maxY=0;
+    for(int i=0;i<ThreadAnalize::shapePoints.size();i++){
+        if(ThreadAnalize::shapePoints[i].x<minX){
+            minX =ThreadAnalize::shapePoints[i].x;
+        }
+        if(ThreadAnalize::shapePoints[i].x>maxX){
+            maxX = ThreadAnalize::shapePoints[i].x;
+        }
+        if(ThreadAnalize::shapePoints[i].y<minY){
+            minY = ThreadAnalize::shapePoints[i].y;
+        }
+        if(ThreadAnalize::shapePoints[i].y>maxY){
+            maxY = ThreadAnalize::shapePoints[i].y;
+        }
+    }
+
+    int diffX = maxX-minX;
+    int diffY = maxY-minY;
+    int width = diffX*1.2;
+    int height = diffY*1.2;
+
+    int offsetX = (width-diffX)/2;
+    int offsetY = (height-diffY)/2;
+
+    for(int i=0;i<ThreadAnalize::shapePoints.size();i++){
+        ThreadAnalize::shapePoints[i].x-=minX;
+        ThreadAnalize::shapePoints[i].y-=minY;
+        ThreadAnalize::shapePoints[i].x+=offsetX;
+        ThreadAnalize::shapePoints[i].y+=offsetY;
+    }
+    Mat img(height, width, CV_8U);
+    img = cv::Scalar(255);
+    cv::cvtColor(img,img,COLOR_GRAY2BGR);
+    circle(img, Point2f(ThreadAnalize::shapePoints[0].x,ThreadAnalize::shapePoints[0].y), 3, cv::Scalar(0, 0, 0), -1, 8);
+    for(int i=1;i<ThreadAnalize::shapePoints.size();i++){
+        cv::line(img, ThreadAnalize::shapePoints[i-1], ThreadAnalize::shapePoints[i], cv::Scalar(0, 0, 0), 3, 8,0);
+    }
+    GaussianBlur( img, img, Size( ThreadAnalize::blur, ThreadAnalize::blur ), 0, 0 );
+    Mat result = GetSquareImage(img,100);
+    return result;
 }

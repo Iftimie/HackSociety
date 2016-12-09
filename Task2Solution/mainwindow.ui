@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1059</width>
-    <height>506</height>
+    <height>544</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -310,8 +310,8 @@
    <widget class="QPushButton" name="startRecord">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>400</y>
+      <x>10</x>
+      <y>430</y>
       <width>75</width>
       <height>23</height>
      </rect>
@@ -439,6 +439,9 @@
       <height>22</height>
      </rect>
     </property>
+    <property name="maximum">
+     <number>10000</number>
+    </property>
    </widget>
    <widget class="QPushButton" name="saveAndNext">
     <property name="geometry">
@@ -544,6 +547,51 @@
     </property>
     <property name="text">
      <string>White</string>
+    </property>
+   </widget>
+   <widget class="QSlider" name="horizontalSlider_3">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>400</y>
+      <width>160</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="maximum">
+     <number>640</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_9">
+    <property name="geometry">
+     <rect>
+      <x>190</x>
+      <y>400</y>
+      <width>47</width>
+      <height>13</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Touch</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="lblUserShape">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>370</y>
+      <width>161</width>
+      <height>101</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Box</enum>
+    </property>
+    <property name="text">
+     <string/>
     </property>
    </widget>
   </widget>

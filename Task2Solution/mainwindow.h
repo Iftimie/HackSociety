@@ -6,6 +6,7 @@
 #include <opencv2/core/core.hpp>
 #include "threadanalize.h"
 #include "Neural_Armadillo.h"
+#include "threadtrainer.h"
 using namespace cv;
 
 namespace Ui {
@@ -30,6 +31,7 @@ public:
     static Neural* net;
 
     static void saveStandardNeuralNet(Neural &net);
+    static void loadDetectionData(vector<arma::Mat<double>>& training_data);
 
 private slots:
     void on_imageWebcamChanged();
@@ -84,10 +86,19 @@ private slots:
 
     void on_btnWhite_clicked();
 
+    void on_horizontalSlider_3_valueChanged(int value);
+
+    void on_classify();
+
+    void on_displayShape();
+
+    void on_FinishedTrainingNeural();
+
 private:
     Ui::MainWindow *ui;
     ThreadWebCam *threadWebcam;
     ThreadAnalize *threadAnalize;
+    ThreadTrainer *threadTrainer;
 
 
     char outputVector[100];
@@ -100,7 +111,7 @@ private:
     Mat translateImg(Mat &img, int offsetx, int offsety);
     cv::Mat rotate_and_crop(double angle,cv::Mat &mat);
     cv::Rect getLargestRect(double imageWidth, double imageHeight, double rotAngDeg, int type);
-    void loadDetectionData(vector<arma::Mat<double>>& training_data);
+    cv::Mat fromPointsToMat();
 };
 
 #endif // MAINWINDOW_H

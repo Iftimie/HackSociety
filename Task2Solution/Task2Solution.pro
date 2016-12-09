@@ -18,7 +18,8 @@ SOURCES += main.cpp\
     threadanalize.cpp \
     MyLabel.cpp \
     Neural_Armadillo.cpp \
-    Cost.cpp
+    Cost.cpp \
+    threadtrainer.cpp
 
 INCLUDEPATH +=C:/OpenCV2410/opencv/build/include
 LIBS +=-LC:/OpenCV2410/opencv/build/x64/vc12/lib \
@@ -52,6 +53,7 @@ HEADERS  += mainwindow.h \
     threadanalize.h \
     MyLabel.h \
     Neural_Armadillo.h \
-    Cost.h
+    Cost.h \
+    threadtrainer.h
 
 FORMS    += mainwindow.ui

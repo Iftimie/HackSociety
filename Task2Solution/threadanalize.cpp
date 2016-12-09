@@ -15,6 +15,9 @@ int ThreadAnalize::erosin=0;
 int ThreadAnalize::blur=11;
 bool ThreadAnalize::startRecord=false;
 vector<Point2f> ThreadAnalize::shapePoints;
+char ThreadAnalize::grid[11][11];
+int ThreadAnalize::nextPos=1;
+int ThreadAnalize::touchPosition=320;
 
 ThreadAnalize::ThreadAnalize(QObject *parent):QThread(parent){
 
@@ -31,21 +34,30 @@ void ThreadAnalize::run(){
         colorFilter(*image0,hsv0);
         colorFilter(*image1,hsv1);
 
-        Rect bounding_rect;
-        findBiggestBlob(hsv1,bounding_rect);
-        int x = bounding_rect.x+bounding_rect.width/2;
-        int y  =bounding_rect.y+bounding_rect.height/2;
-        qDebug()<<"x y "<<x<<y;
-        if(ThreadAnalize::startRecord==true && x!=0 &&y !=0){
-
-            shapePoints.push_back(Point2f(x,y));
+        Rect bounding_rect1;
+        findBiggestBlob(hsv1,bounding_rect1);
+        int x1 = bounding_rect1.x+bounding_rect1.width/2;
+        int y1  =bounding_rect1.y+bounding_rect1.height/2;
+        int width = hsv0.cols;
+        int height = hsv0.rows;
+        this->nextPosition(x1,y1,width,height);
+        if(ThreadAnalize::startRecord==true && x1!=0 &&y1 !=0){
+            shapePoints.push_back(Point2f(x1,y1));
+            emit displayShape();
         }
 
+        Rect bounding_rect0;
+        findBiggestBlob(hsv0,bounding_rect0);
+        int x0 = bounding_rect0.x+bounding_rect0.width/2;
+        int y0  =bounding_rect0.y+bounding_rect0.height/2;
+        this->touch(x0,y0,width,height);
 
         cv::cvtColor(hsv0,hsv0,COLOR_GRAY2BGR);
         cv::cvtColor(hsv1,hsv1,COLOR_GRAY2BGR);
 
-        circle(hsv1, Point2f(x,y), 3, cv::Scalar(0, 255, 0), -1, 8);
+        circle(hsv1, Point2f(x1,y1), 3, cv::Scalar(0, 255, 0), -1, 8);
+        circle(hsv0, Point2f(x0,y0), 3, cv::Scalar(0, 255, 0), -1, 8);
+
         MainWindow::storeGetProcImage(&hsv0,"EN",0);
         MainWindow::storeGetProcImage(&hsv1,"EN",1);
         emit analizeBinaryResult();
@@ -89,4 +101,26 @@ void ThreadAnalize::findBiggestBlob(cv::Mat & matImage,cv::Rect &bounding_rect){
     //rectangle(matImage, bounding_rect, cvScalar(0, 225, 0), 1, 8, 0);
     return;
 }
+
+void ThreadAnalize::nextPosition(int x,int y,int width,int height){
+    if(y<40 && x>40 && x<width-40){
+        nextPos = 0;//top
+    }else if(y>height-40 && x>40 && x<width-40){
+        nextPos =2 ;//down
+    }else if(x<40 && y > 40 && y<height-40){
+        nextPos =3 ;//left
+    }else if(x>width-40 && y > 40 && y<height-40){
+        nextPos =2 ;//down
+    }
+    qDebug()<<nextPos;
+}
+
+ void ThreadAnalize::touch(int x,int y,int width,int height){
+    if(x<ThreadAnalize::touchPosition){
+        ThreadAnalize::startRecord=true;
+    }else{
+        ThreadAnalize::startRecord=false;
+        emit classify();
+    }
+ }
 
