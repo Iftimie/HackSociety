@@ -3,11 +3,14 @@
 #include "threadwebcam.h"
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <QMessageBox>
 
 Mat MainWindow::image0;
 Mat MainWindow::image1;
 Mat MainWindow::procImage0;
 Mat MainWindow::procImage1;
+Neural* MainWindow::net;
+double MainWindow::stopTreshold;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -230,10 +233,11 @@ void MainWindow::on_startRecord_clicked()
         Mat img(height, width, CV_8U);
         img = cv::Scalar(255);
         cv::cvtColor(img,img,COLOR_GRAY2BGR);
-        circle(img, Point2f(ThreadAnalize::shapePoints[0].x,ThreadAnalize::shapePoints[0].y), 3, cv::Scalar(0, 255, 0), -1, 8);
+        circle(img, Point2f(ThreadAnalize::shapePoints[0].x,ThreadAnalize::shapePoints[0].y), 3, cv::Scalar(0, 0, 0), -1, 8);
         for(int i=1;i<ThreadAnalize::shapePoints.size();i++){
             cv::line(img, ThreadAnalize::shapePoints[i-1], ThreadAnalize::shapePoints[i], cv::Scalar(0, 0, 0), 3, 8,0);
         }
+        GaussianBlur( img, img, Size( 11, 11 ), 0, 0 );
         cv::imshow("reuslt",GetSquareImage(img,100));
         cv::waitKey(30);
     }
@@ -323,6 +327,7 @@ void MainWindow::on_saveAndNext_clicked()
                 MyLabel::img.copyTo(copyImage);
                 copyImage = this->rotate_and_crop(deg,copyImage);
                 copyImage = this->translateImg(copyImage,dx,dy);
+                GaussianBlur( copyImage, copyImage, Size( 11, 11 ), 0, 0 );
                 char filename[100];
                 sprintf(filename,"trainingImages/img%d.jpg",indexStart);
                 imwrite(filename,copyImage);
@@ -464,4 +469,91 @@ Mat MainWindow::translateImg(Mat &img, int offsetx, int offsety){
     Mat trans_mat = (Mat_<double>(2,3) << 1, 0, offsetx, 0, 1, offsety);
     warpAffine(img,img,trans_mat,img.size());
     return trans_mat;
+}
+
+void MainWindow::on_btnTrain_clicked()
+{
+    arma::Mat<int> sizes(1,4);
+    sizes(0,0)=10000;
+    sizes(0,1)=100;
+    sizes(0,2)=30;
+    sizes(0,3)=7;
+    this->net = new Neural(sizes);
+    vector<arma::Mat<double>> training_data;
+    loadDetectionData(training_data);
+    this->net->SGD(training_data,30,10,0.03,5,true,true,false,false);
+    QMessageBox msg;
+    msg.setText("Training Complete");
+    msg.exec();
+
+}
+
+void MainWindow::on_doubleSpinBox_valueChanged(double arg1)
+{
+    this->stopTreshold = arg1;
+}
+
+void MainWindow::saveStandardNeuralNet(Neural &net){
+    for(int i=0;i<net.weights.size();i++){
+        char buffer[50];
+        sprintf(buffer,"w%d.mat",i);
+        net.weights[i].save(buffer);
+        sprintf(buffer,"b%d.mat",i);
+        net.biases[i].save(buffer);
+    }
+}
+
+void MainWindow::loadDetectionData(vector<arma::Mat<double>>& training_data){
+    FILE* def = fopen("trainingImages/def.txt", "r");
+    if (!def){
+        qDebug("no def file found!!");
+    }
+    else{
+        int outputSize =7;
+        std::vector<double> output;
+        int value;
+
+        char path[100];
+        fscanf(def,"%s",path);
+
+        for(int j=0;j<outputSize;j++){
+            fscanf(def, "%d", &value);
+            output.push_back(value);
+        }
+
+        int inputSize = 10000/*MainWindow::net->sizes(0,0)*/;
+        arma::Mat<double> b(inputSize, 1); b.fill(255);
+        arma::Mat<double> c(inputSize, 1); c.fill(1);
+        while (!feof(def)){
+            Mat img;
+            img = cv::imread(path);
+            cv::resize(img,img,Size(100,100));
+            cv::cvtColor(img,img,CV_RGB2GRAY); //when i saved it was CV_GRAY2RGB
+            std::vector<double> vec;
+            for (int i = 0; i < img.rows; ++i) {
+                vec.insert(vec.end(), (uchar*)img.ptr<uchar>(i), (uchar*)img.ptr<uchar>(i)+img.cols);
+            }
+            arma::Mat<double> image(vec);
+            //image = (((image - a) / (b - a)) % (B - A)) + A;
+            image = (image+c) / b;
+            image.resize(inputSize+outputSize, 1);
+            for (int i = 0; i < outputSize; i++){
+                image(inputSize + i, 0) = output[i];
+            }
+
+            training_data.push_back(image);
+
+            output.clear();
+
+            fscanf(def,"%s",path);
+            for(int j=0;j<outputSize;j++){
+                fscanf(def, "%d", &value);
+                output.push_back(value);
+            }
+        }
+        while(training_data.size()%10 !=0){
+            training_data.pop_back();
+        }
+        fclose(def);
+    }
 }

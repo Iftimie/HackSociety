@@ -5,6 +5,7 @@
 #include <threadwebcam.h>
 #include <opencv2/core/core.hpp>
 #include "threadanalize.h"
+#include "Neural_Armadillo.h"
 using namespace cv;
 
 namespace Ui {
@@ -24,6 +25,11 @@ public:
     static Mat procImage0;
     static Mat procImage1;
     static Mat* storeGetProcImage(Mat *img, char* action, int slot);
+    static double stopTreshold;
+
+    static Neural* net;
+
+    static void saveStandardNeuralNet(Neural &net);
 
 private slots:
     void on_imageWebcamChanged();
@@ -58,10 +64,15 @@ private slots:
 
     void on_pushButton_clicked();
 
+    void on_btnTrain_clicked();
+
+    void on_doubleSpinBox_valueChanged(double arg1);
+
 private:
     Ui::MainWindow *ui;
     ThreadWebCam *threadWebcam;
     ThreadAnalize *threadAnalize;
+
 
     char outputVector[100];
     int indexStart;
@@ -73,6 +84,7 @@ private:
     Mat translateImg(Mat &img, int offsetx, int offsety);
     cv::Mat rotate_and_crop(double angle,cv::Mat &mat);
     cv::Rect getLargestRect(double imageWidth, double imageHeight, double rotAngDeg, int type);
+    void loadDetectionData(vector<arma::Mat<double>>& training_data);
 };
 
 #endif // MAINWINDOW_H
