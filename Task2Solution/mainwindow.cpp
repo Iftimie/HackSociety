@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "threadwebcam.h"
+#include <opencv2/imgproc/imgproc.hpp>
 
 Mat MainWindow::image0;
 Mat MainWindow::image1;
@@ -29,6 +30,8 @@ MainWindow::~MainWindow()
 void MainWindow::on_imageWebcamChanged(){
     Mat *resized0 =MainWindow::storeGetImage(nullptr,"EX",0);
     Mat *resized1 =MainWindow::storeGetImage(nullptr,"EX",1);
+    cvtColor(*resized0, *resized0, CV_BGR2RGB);
+    cvtColor(*resized1, *resized1, CV_BGR2RGB);
     QImage imdisplay0((uchar*)resized0->data, resized0->cols, resized0->rows, resized0->step, QImage::Format_RGB888); //Converts the CV image into Qt standard format
     QImage imdisplay1((uchar*)resized1->data, resized1->cols, resized1->rows, resized1->step, QImage::Format_RGB888);
     int w = this->ui->top->width();
@@ -44,6 +47,8 @@ void MainWindow::on_imageWebcamChanged(){
 void MainWindow::on_analizeBinaryResult(){
     Mat *resized0 =MainWindow::storeGetProcImage(nullptr,"EX",0);
     Mat *resized1 =MainWindow::storeGetProcImage(nullptr,"EX",1);
+    cvtColor(*resized0, *resized0, CV_BGR2RGB);
+    cvtColor(*resized1, *resized1, CV_BGR2RGB);
     QImage imdisplay0((uchar*)resized0->data, resized0->cols, resized0->rows, resized0->step, QImage::Format_RGB888); //Converts the CV image into Qt standard format
     QImage imdisplay1((uchar*)resized1->data, resized1->cols, resized1->rows, resized1->step, QImage::Format_RGB888);
     int w = this->ui->resultTop->width();
@@ -56,20 +61,21 @@ void MainWindow::on_analizeBinaryResult(){
     delete resized1;
 }
 
-void MainWindow::saveBinarizationParams(int hmin, int hmax, int smin, int smax, int vmin, int vmax)
+void MainWindow::saveBinarizationParams(int hmin, int hmax, int smin, int smax, int vmin, int vmax,int erosin)
 {
-    FILE *f = fopen("bin_params.txt","s");
+    FILE *f = fopen("bin_params.txt","w");
         if(!f){
             printf("error opening bin_params.txt for writting");
         }else {
            fprintf(f,"%d \n",hmin);fprintf(f,"%d \n",hmax);
            fprintf(f,"%d \n",smin);fprintf(f,"%d \n",smax);
            fprintf(f,"%d \n",vmin);fprintf(f,"%d \n",vmax);
+           fprintf(f,"%d \n",erosin);
            fclose(f);
         }
 }
 
-void MainWindow::loadBinarizationParams(int& hmin, int& hmax, int& smin, int& smax, int& vmin, int& vmax)
+void MainWindow::loadBinarizationParams(int& hmin, int& hmax, int& smin, int& smax, int& vmin, int& vmax,int &erosin)
 {
     FILE *f = fopen("bin_params.txt", "r");
         if(!f)
@@ -77,9 +83,10 @@ void MainWindow::loadBinarizationParams(int& hmin, int& hmax, int& smin, int& sm
             printf("error opening bin_params for reading");
         } else
         {
-            fscanf(f,"%d \n",hmin);fscanf(f,"%d \n",hmax);
-            fscanf(f,"%d \n",smin);fscanf(f,"%d \n",smax);
-            fscanf(f,"%d \n",vmin);fscanf(f,"%d \n",vmax);
+            fscanf(f,"%d \n",&hmin);fscanf(f,"%d \n",&hmax);
+            fscanf(f,"%d \n",&smin);fscanf(f,"%d \n",&smax);
+            fscanf(f,"%d \n",&vmin);fscanf(f,"%d \n",&vmax);
+            fscanf(f,"%d \n",&erosin);
 
             // to do UI actualization
             fclose(f);
@@ -121,20 +128,21 @@ void MainWindow::on_btnSaveParams_clicked()
 {
     this->saveBinarizationParams(ThreadAnalize::minH,ThreadAnalize::maxH,
                                  ThreadAnalize::minS,ThreadAnalize::maxS,
-                                 ThreadAnalize::minV,ThreadAnalize::maxV);
+                                 ThreadAnalize::minV,ThreadAnalize::maxV,ThreadAnalize::erosin);
 }
 
 void MainWindow::on_btnLoadParams_clicked()
 {
     this->loadBinarizationParams(ThreadAnalize::minH,ThreadAnalize::maxH,
                                  ThreadAnalize::minS,ThreadAnalize::maxS,
-                                 ThreadAnalize::minV,ThreadAnalize::maxV);
+                                 ThreadAnalize::minV,ThreadAnalize::maxV,ThreadAnalize::erosin);
     this->ui->sliMinH->setValue(ThreadAnalize::minH);
     this->ui->sliMaxH->setValue(ThreadAnalize::maxH);
     this->ui->sliMinS->setValue(ThreadAnalize::minS);
     this->ui->sliMaxS->setValue(ThreadAnalize::maxS);
     this->ui->sliMinV->setValue(ThreadAnalize::minV);
     this->ui->sliMaxV->setValue(ThreadAnalize::maxV);
+    this->ui->horizontalSlider->setValue(ThreadAnalize::erosin);
 }
 
 Mat* MainWindow::storeGetProcImage(Mat *img, char* action, int slot) {
@@ -166,4 +174,9 @@ Mat* MainWindow::storeGetProcImage(Mat *img, char* action, int slot) {
     }
 
     return 0;
+}
+
+void MainWindow::on_horizontalSlider_valueChanged(int value)
+{
+    ThreadAnalize::erosin = value;
 }

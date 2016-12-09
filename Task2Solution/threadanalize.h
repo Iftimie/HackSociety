@@ -17,6 +17,7 @@ public:
     static int maxS;
     static int minV;
     static int maxV;
+    static int erosin;
 
 public:
     ThreadAnalize(QObject *parent );

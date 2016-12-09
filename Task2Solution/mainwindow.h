@@ -34,13 +34,15 @@ private slots:
 
     void on_btnLoadParams_clicked();
 
+    void on_horizontalSlider_valueChanged(int value);
+
 private:
     Ui::MainWindow *ui;
     ThreadWebCam *threadWebcam;
     ThreadAnalize *threadAnalize;
 
-    void saveBinarizationParams(int hmin, int hmax, int smin, int smax, int vmin, int vmax);
-    void loadBinarizationParams(int& hmin, int& hmax, int& smin, int& smax, int& vmin, int& vmax);
+    void saveBinarizationParams(int hmin, int hmax, int smin, int smax, int vmin, int vmax,int erosin);
+    void loadBinarizationParams(int& hmin, int& hmax, int& smin, int& smax, int& vmin, int& vmax,int &erosin);
 };
 
 #endif // MAINWINDOW_H

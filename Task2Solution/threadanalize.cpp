@@ -11,6 +11,7 @@ int ThreadAnalize::minS=0;
 int ThreadAnalize::maxS=0;
 int ThreadAnalize::minV=0;
 int ThreadAnalize::maxV=0;
+int ThreadAnalize::erosin=0;
 
 ThreadAnalize::ThreadAnalize(QObject *parent):QThread(parent){
 
@@ -18,7 +19,7 @@ ThreadAnalize::ThreadAnalize(QObject *parent):QThread(parent){
 
 void ThreadAnalize::run(){
 
-    QThread::msleep(1000);
+    QThread::msleep(5000);
     while(running){
         Mat *image0 = MainWindow::storeGetImage(nullptr,"EX",0);
         Mat *image1 = MainWindow::storeGetImage(nullptr,"EX",1);
@@ -40,6 +41,10 @@ void ThreadAnalize::run(){
 void ThreadAnalize::colorFilter(Mat &frame,Mat &hsv){
     cv::cvtColor(frame, hsv, COLOR_BGR2HSV);
     cv::inRange(hsv, Scalar(minH, minS, minV), Scalar(maxH, maxS, maxV), hsv);
+    Mat element = getStructuringElement(MORPH_ELLIPSE,
+           Size(2 * erosin+ 1, 2 * erosin + 1),
+           Point(erosin, erosin));
+    cv::erode(hsv, hsv, element);
     //dilatation(hsv);
 }
 
