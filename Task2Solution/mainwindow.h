@@ -94,6 +94,10 @@ private slots:
 
     void on_FinishedTrainingNeural();
 
+    void on_btnStartWebAnalyse_clicked();
+
+    void on_loadNetwork_clicked();
+
 private:
     Ui::MainWindow *ui;
     ThreadWebCam *threadWebcam;

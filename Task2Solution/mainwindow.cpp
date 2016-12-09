@@ -9,23 +9,17 @@ Mat MainWindow::image0;
 Mat MainWindow::image1;
 Mat MainWindow::procImage0;
 Mat MainWindow::procImage1;
-Neural* MainWindow::net;
+Neural* MainWindow::net = nullptr;
 double MainWindow::stopTreshold;
+
+#define numberOfPoints 10
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    this->threadWebcam = new ThreadWebCam(this);
-    connect(this->threadWebcam,SIGNAL(imageWebCamChanged()),this,SLOT(on_imageWebcamChanged()));
-    this->threadWebcam->start();
 
-    this->threadAnalize = new ThreadAnalize(this);
-    connect(this->threadAnalize,SIGNAL(analizeBinaryResult()),this,SLOT(on_analizeBinaryResult()));
-    connect(this->threadAnalize,SIGNAL(classify()),this,SLOT(on_classify()));
-    connect(this->threadAnalize,SIGNAL(displayShape()),this,SLOT(on_displayShape()));
-    this->threadAnalize->start();
 
     strcpy(this->outputVector,"1 0 0 0 0 0 0");
     this->indexStart=0;
@@ -39,10 +33,13 @@ MainWindow::~MainWindow()
 void MainWindow::on_imageWebcamChanged(){
     Mat *resized0 =MainWindow::storeGetImage(nullptr,"EX",0);
     Mat *resized1 =MainWindow::storeGetImage(nullptr,"EX",1);
-    cv::rectangle(*resized1,Rect(40,40,resized1->cols-40,resized1->rows-40),Scalar(0,255,0),1,8,0);
+    //qDebug()<<resized1->cols-40<<" "<<resized1->rows-40;
+    cv::rectangle(*resized1,Rect(40,40,resized1->cols-80,resized1->rows-80),Scalar(0,255,0),4,8,0);
+    cv::line(*resized0, Point(ThreadAnalize::touchPosition,0), Point(ThreadAnalize::touchPosition,resized0->rows), cv::Scalar(0, 0, 0), 3, 8,0);
+    cv::flip(*resized1,*resized1,0);
+    cv::flip(*resized1,*resized1,1);
     cvtColor(*resized0, *resized0, CV_BGR2RGB);
     cvtColor(*resized1, *resized1, CV_BGR2RGB);
-
     QImage imdisplay0((uchar*)resized0->data, resized0->cols, resized0->rows, resized0->step, QImage::Format_RGB888); //Converts the CV image into Qt standard format
     QImage imdisplay1((uchar*)resized1->data, resized1->cols, resized1->rows, resized1->step, QImage::Format_RGB888);
     int w = this->ui->top->width();
@@ -454,9 +451,9 @@ Mat MainWindow::translateImg(Mat &img, int offsetx, int offsety){
 void MainWindow::on_btnTrain_clicked()
 {
     arma::Mat<int> sizes(1,4);
-    sizes(0,0)=10000;
-    sizes(0,1)=100;
-    sizes(0,2)=30;
+    sizes(0,0)=900;
+    sizes(0,1)=60;
+    sizes(0,2)=20;
     sizes(0,3)=7;
     this->net = new Neural(sizes);
     this->threadTrainer = new ThreadTrainer(this);
@@ -507,13 +504,13 @@ void MainWindow::loadDetectionData(vector<arma::Mat<double>>& training_data){
             output.push_back(value);
         }
 
-        int inputSize = 10000/*MainWindow::net->sizes(0,0)*/;
+        int inputSize = 900/*MainWindow::net->sizes(0,0)*/;
         arma::Mat<double> b(inputSize, 1); b.fill(255);
         arma::Mat<double> c(inputSize, 1); c.fill(1);
         while (!feof(def)){
             Mat img;
             img = cv::imread(path);
-            cv::resize(img,img,Size(100,100));
+            cv::resize(img,img,Size(30,30));
             cv::cvtColor(img,img,CV_RGB2GRAY); //when i saved it was CV_GRAY2RGB
             std::vector<double> vec;
             for (int i = 0; i < img.rows; ++i) {
@@ -596,12 +593,17 @@ void MainWindow::on_horizontalSlider_3_valueChanged(int value)
 
 void MainWindow::on_classify(){
 
+
+    if (this->net == nullptr || ThreadAnalize::shapePoints.size() < 2)
+        return;
+    qDebug()<<"shape size"<<ThreadAnalize::shapePoints.size();
     Mat inputNeural = fromPointsToMat();
     ThreadAnalize::shapePoints.clear();
-    int inputSize=10000;
+    qDebug()<<"shape size after clear"<<ThreadAnalize::shapePoints.size();
+    int inputSize=900;
     arma::Mat<double> b(inputSize, 1); b.fill(255);
     arma::Mat<double> c(inputSize, 1); c.fill(1);
-    cv::resize(inputNeural,inputNeural,Size(100,100));
+    cv::resize(inputNeural,inputNeural,Size(30,30));
     cv::cvtColor(inputNeural,inputNeural,CV_RGB2GRAY); //when i saved it was CV_GRAY2RGB
     std::vector<double> vec;
     for (int i = 0; i < inputNeural.rows; ++i) {
@@ -615,12 +617,17 @@ void MainWindow::on_classify(){
 }
 
 void MainWindow::on_displayShape(){
+
+    if (ThreadAnalize::shapePoints.size() <3)
+        return;
+    //qDebug("debug");
+
     Mat image = fromPointsToMat();
     cvtColor(image, image, CV_BGR2RGB);
     QImage imageDisplay((uchar*)image.data, image.cols, image.rows, image.step, QImage::Format_RGB888); //Converts the CV image into Qt standard format
-    int w = this->ui->resultTop->width();
-    int h = this->ui->resultTop->height();
-    this->ui->resultTop->setPixmap(QPixmap::fromImage(imageDisplay).scaled(w,h,Qt::KeepAspectRatio));
+    int w = this->ui->lblUserShape->width();
+    int h = this->ui->lblUserShape->height();
+    this->ui->lblUserShape->setPixmap(QPixmap::fromImage(imageDisplay).scaled(w,h,Qt::KeepAspectRatio));
 }
 
 cv::Mat MainWindow::fromPointsToMat(){
@@ -628,18 +635,22 @@ cv::Mat MainWindow::fromPointsToMat(){
     int minY=99999;
     int maxX=0;
     int maxY=0;
-    for(int i=0;i<ThreadAnalize::shapePoints.size();i++){
-        if(ThreadAnalize::shapePoints[i].x<minX){
-            minX =ThreadAnalize::shapePoints[i].x;
+
+    vector<Point2f> copyVector(ThreadAnalize::shapePoints);
+
+    int shapePointsSize = copyVector.size();
+    for(int i=0;i<shapePointsSize;i++){
+        if(copyVector[i].x<minX){
+            minX =copyVector[i].x;
         }
-        if(ThreadAnalize::shapePoints[i].x>maxX){
-            maxX = ThreadAnalize::shapePoints[i].x;
+        if(copyVector[i].x>maxX){
+            maxX = copyVector[i].x;
         }
-        if(ThreadAnalize::shapePoints[i].y<minY){
-            minY = ThreadAnalize::shapePoints[i].y;
+        if(copyVector[i].y<minY){
+            minY = copyVector[i].y;
         }
-        if(ThreadAnalize::shapePoints[i].y>maxY){
-            maxY = ThreadAnalize::shapePoints[i].y;
+        if(copyVector[i].y>maxY){
+            maxY =copyVector[i].y;
         }
     }
 
@@ -651,20 +662,57 @@ cv::Mat MainWindow::fromPointsToMat(){
     int offsetX = (width-diffX)/2;
     int offsetY = (height-diffY)/2;
 
-    for(int i=0;i<ThreadAnalize::shapePoints.size();i++){
-        ThreadAnalize::shapePoints[i].x-=minX;
-        ThreadAnalize::shapePoints[i].y-=minY;
-        ThreadAnalize::shapePoints[i].x+=offsetX;
-        ThreadAnalize::shapePoints[i].y+=offsetY;
+    for(int i=0;i<copyVector.size();i++){
+        copyVector[i].x-=minX;
+        copyVector[i].y-=minY;
+        copyVector[i].x+=offsetX;
+        copyVector[i].y+=offsetY;
     }
     Mat img(height, width, CV_8U);
     img = cv::Scalar(255);
     cv::cvtColor(img,img,COLOR_GRAY2BGR);
-    circle(img, Point2f(ThreadAnalize::shapePoints[0].x,ThreadAnalize::shapePoints[0].y), 3, cv::Scalar(0, 0, 0), -1, 8);
-    for(int i=1;i<ThreadAnalize::shapePoints.size();i++){
-        cv::line(img, ThreadAnalize::shapePoints[i-1], ThreadAnalize::shapePoints[i], cv::Scalar(0, 0, 0), 3, 8,0);
+    circle(img, Point2f(copyVector[0].x,copyVector[0].y), 3, cv::Scalar(0, 0, 0), -1, 8);
+    //qDebug()<<"x="<<ThreadAnalize::shapePoints[0].x<<",y="<<ThreadAnalize::shapePoints[0].y;
+    for(int i=1/*numberOfPoints*/;i<copyVector.size();i++){
+        //qDebug()<<"x="<<ThreadAnalize::shapePoints[i].x<<",y="<<ThreadAnalize::shapePoints[i].y;
+        cv::line(img, copyVector[i-1], copyVector[i], cv::Scalar(0, 0, 0), 3, 8,0);
     }
+    // QThread::sleep(10);
     GaussianBlur( img, img, Size( ThreadAnalize::blur, ThreadAnalize::blur ), 0, 0 );
     Mat result = GetSquareImage(img,100);
+    cv::flip(result,result,1);
+    cv::flip(result,result,0);
     return result;
+}
+
+void MainWindow::on_btnStartWebAnalyse_clicked()
+{
+    this->threadWebcam = new ThreadWebCam(this);
+    connect(this->threadWebcam,SIGNAL(imageWebCamChanged()),this,SLOT(on_imageWebcamChanged()));
+    this->threadWebcam->start();
+
+    this->threadAnalize = new ThreadAnalize(this);
+    connect(this->threadAnalize,SIGNAL(analizeBinaryResult()),this,SLOT(on_analizeBinaryResult()));
+    connect(this->threadAnalize,SIGNAL(classify()),this,SLOT(on_classify()));
+    connect(this->threadAnalize,SIGNAL(displayShape()),this,SLOT(on_displayShape()));
+    this->threadAnalize->start();
+}
+
+void MainWindow::on_loadNetwork_clicked()
+{
+    if(this->net!=nullptr)
+        delete this->net;
+    arma::Mat<int> sizes(1,4);
+    sizes(0,0)=900;
+    sizes(0,1)=60;
+    sizes(0,2)=20;
+    sizes(0,3)=7;
+    this->net = new Neural(sizes);
+    for(int i=0;i<net->weights.size();i++){
+        char buffer[50];
+        sprintf(buffer,"w%d.mat",i);
+        net->weights[i].load(buffer);
+        sprintf(buffer,"b%d.mat",i);
+        net->biases[i].load(buffer);
+    }
 }

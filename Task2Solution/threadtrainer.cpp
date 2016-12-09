@@ -20,6 +20,7 @@ ThreadTrainer::ThreadTrainer(QObject *parent) : QThread(parent){
 void ThreadTrainer::run(){
     vector<arma::Mat<double>> training_data;
     MainWindow::loadDetectionData(training_data);
+    qDebug("Loaded images");
     MainWindow::net->SGD(training_data,10, 10, 0.03, 5,true,true,false,false);
     MainWindow::saveStandardNeuralNet(*MainWindow::net);
     emit FinishedTrainingNeural();

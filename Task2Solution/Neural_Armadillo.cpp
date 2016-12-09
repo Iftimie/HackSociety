@@ -136,15 +136,15 @@ double Neural::SGD(vector<arma::Mat<double>> &training_data,
             lmbda = 0.1*lmbda;
         }
 		if (monitor_training_cost){
-            cout << "Epoch " << j << " training complete" << endl;
-            cout << "Cost on training data " << final_cost<<endl;
+            qDebug() << "Epoch " << j << " training complete" << endl;
+            qDebug()<< "Cost on training data " << final_cost<<endl;
 		}
 
 		if (monitor_training_accuracy){
 			int accuracy = this->accuracy(training_data);
-			cout << "Accuracy on training data " << accuracy <<" / "<<n<< endl;
+            qDebug() << "Accuracy on training data " << accuracy <<" / "<<n<< endl;
         }
-		cout << endl;
+        qDebug()<< endl;
         MainWindow::saveStandardNeuralNet(*this);
 	}
 	
