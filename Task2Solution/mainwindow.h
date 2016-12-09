@@ -82,6 +82,8 @@ private slots:
 
     void on_sliMaxS_valueChanged(int value);
 
+    void on_btnWhite_clicked();
+
 private:
     Ui::MainWindow *ui;
     ThreadWebCam *threadWebcam;

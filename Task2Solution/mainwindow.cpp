@@ -77,7 +77,7 @@ void MainWindow::saveBinarizationParams(int hmin, int hmax, int smin, int smax, 
            fprintf(f,"%d \n",hmin);fprintf(f,"%d \n",hmax);
            fprintf(f,"%d \n",smin);fprintf(f,"%d \n",smax);
            fprintf(f,"%d \n",vmin);fprintf(f,"%d \n",vmax);
-           fprintf(f,"%d \n",erosin);
+           fprintf(f,"%d \n",erosin);fprintf(f,"%d \n",ThreadAnalize::blur);
            fclose(f);
         }
 }
@@ -93,7 +93,7 @@ void MainWindow::loadBinarizationParams(int& hmin, int& hmax, int& smin, int& sm
             fscanf(f,"%d \n",&hmin);fscanf(f,"%d \n",&hmax);
             fscanf(f,"%d \n",&smin);fscanf(f,"%d \n",&smax);
             fscanf(f,"%d \n",&vmin);fscanf(f,"%d \n",&vmax);
-            fscanf(f,"%d \n",&erosin);
+            fscanf(f,"%d \n",&erosin);fscanf(f,"%d \n",&ThreadAnalize::blur);
 
             // to do UI actualization
             fclose(f);
@@ -150,6 +150,7 @@ void MainWindow::on_btnLoadParams_clicked()
     this->ui->sliMinV->setValue(ThreadAnalize::minV);
     this->ui->sliMaxV->setValue(ThreadAnalize::maxV);
     this->ui->horizontalSlider->setValue(ThreadAnalize::erosin);
+    this->ui->horizontalSlider_2->setValue(ThreadAnalize::blur);
 }
 
 Mat* MainWindow::storeGetProcImage(Mat *img, char* action, int slot) {
@@ -321,9 +322,9 @@ void MainWindow::on_saveAndNext_clicked()
     Mat copyImage;
 
 
-    for(double deg = -12;deg<12;deg+=6){
-        for(int dx=-15;dx<15;dx+=10){
-            for(int dy = -15;dy<15;dy+=10){
+    for(double deg = -12;deg<=12;deg+=6){
+        for(int dx=-15;dx<=15;dx+=10){
+            for(int dy = -15;dy<=15;dy+=10){
                 MyLabel::img.copyTo(copyImage);
                 copyImage = this->rotate_and_crop(deg,copyImage);
                 copyImage = this->translateImg(copyImage,dx,dy);
@@ -467,7 +468,10 @@ void MainWindow::on_pushButton_clicked()
 
 Mat MainWindow::translateImg(Mat &img, int offsetx, int offsety){
     Mat trans_mat = (Mat_<double>(2,3) << 1, 0, offsetx, 0, 1, offsety);
-    warpAffine(img,img,trans_mat,img.size());
+    warpAffine(img,img,trans_mat,img.size(),
+               cv::INTER_LINEAR,
+               cv::BORDER_CONSTANT,
+               cv::Scalar(255, 255, 255));
     return trans_mat;
 }
 
@@ -560,6 +564,9 @@ void MainWindow::loadDetectionData(vector<arma::Mat<double>>& training_data){
 
 void MainWindow::on_horizontalSlider_2_valueChanged(int value)
 {
+    if(value%2==0){
+        value--;
+    }
     ThreadAnalize::blur = value;
 }
 
@@ -591,4 +598,11 @@ void MainWindow::on_sliMinV_valueChanged(int value)
 void MainWindow::on_sliMaxV_valueChanged(int value)
 {
     ThreadAnalize::maxV=value;
+}
+
+void MainWindow::on_btnWhite_clicked()
+{
+    MyLabel::img = Mat(300, 300, CV_8U);
+    MyLabel::img = cv::Scalar(255);
+    cv::cvtColor(MyLabel::img,MyLabel::img,COLOR_GRAY2BGR);
 }
