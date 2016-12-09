@@ -45,6 +45,7 @@ private:
 
     void saveBinarizationParams(int hmin, int hmax, int smin, int smax, int vmin, int vmax,int erosin);
     void loadBinarizationParams(int& hmin, int& hmax, int& smin, int& smax, int& vmin, int& vmax,int &erosin);
+    cv::Mat GetSquareImage( const cv::Mat& img, int target_width );
 };
 
 #endif // MAINWINDOW_H

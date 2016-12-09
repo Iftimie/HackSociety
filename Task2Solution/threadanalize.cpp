@@ -35,7 +35,8 @@ void ThreadAnalize::run(){
         int x = bounding_rect.x+bounding_rect.width/2;
         int y  =bounding_rect.y+bounding_rect.height/2;
         qDebug()<<"x y "<<x<<y;
-        if(ThreadAnalize::startRecord==true){
+        if(ThreadAnalize::startRecord==true && x!=0 &&y !=0){
+
             shapePoints.push_back(Point2f(x,y));
         }
 

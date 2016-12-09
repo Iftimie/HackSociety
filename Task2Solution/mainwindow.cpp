@@ -231,7 +231,40 @@ void MainWindow::on_startRecord_clicked()
         for(int i=1;i<ThreadAnalize::shapePoints.size();i++){
             cv::line(img, ThreadAnalize::shapePoints[i-1], ThreadAnalize::shapePoints[i], cv::Scalar(0, 0, 0), 3, 8,0);
         }
-        cv::imshow("reuslt",img);
+        cv::imshow("reuslt",GetSquareImage(img,100));
         cv::waitKey(30);
     }
+}
+
+cv::Mat MainWindow::GetSquareImage( const cv::Mat& img, int target_width)
+{
+    int width = img.cols,
+       height = img.rows;
+
+    //cv::Mat square = cv::Mat::zeros( target_width, target_width, img.type() );
+    Mat square(target_width, target_width, CV_8U);
+    square = cv::Scalar(255);
+    cv::cvtColor(square,square,COLOR_GRAY2BGR);
+
+    int max_dim = ( width >= height ) ? width : height;
+    float scale = ( ( float ) target_width ) / max_dim;
+    cv::Rect roi;
+    if ( width >= height )
+    {
+        roi.width = target_width;
+        roi.x = 0;
+        roi.height = height * scale;
+        roi.y = ( target_width - roi.height ) / 2;
+    }
+    else
+    {
+        roi.y = 0;
+        roi.height = target_width;
+        roi.width = width * scale;
+        roi.x = ( target_width - roi.width ) / 2;
+    }
+
+    cv::resize( img, square( roi ), roi.size() );
+
+    return square;
 }
