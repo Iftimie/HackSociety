@@ -34,6 +34,7 @@ void ThreadAnalize::run(){
         findBiggestBlob(hsv1,bounding_rect);
         int x = bounding_rect.x+bounding_rect.width/2;
         int y  =bounding_rect.y+bounding_rect.height/2;
+        qDebug()<<"x y "<<x<<y;
         if(ThreadAnalize::startRecord==true){
             shapePoints.push_back(Point2f(x,y));
         }
