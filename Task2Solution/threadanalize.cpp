@@ -29,7 +29,7 @@ void ThreadAnalize::run(){
         colorFilter(*image1,hsv1);
 
         Rect bounding_rect;
-        findBiggestBlob(hsv0,bounding_rect);
+        findBiggestBlob(hsv1,bounding_rect);
         int x = bounding_rect.x+bounding_rect.width/2;
         int y  =bounding_rect.y+bounding_rect.height/2;
 
@@ -37,7 +37,7 @@ void ThreadAnalize::run(){
         cv::cvtColor(hsv0,hsv0,COLOR_GRAY2BGR);
         cv::cvtColor(hsv1,hsv1,COLOR_GRAY2BGR);
 
-        circle(hsv0, Point2f(x,y), 3, cv::Scalar(0, 255, 0), -1, 8);
+        circle(hsv1, Point2f(x,y), 3, cv::Scalar(0, 255, 0), -1, 8);
         MainWindow::storeGetProcImage(&hsv0,"EN",0);
         MainWindow::storeGetProcImage(&hsv1,"EN",1);
         emit analizeBinaryResult();
@@ -76,8 +76,9 @@ void ThreadAnalize::findBiggestBlob(cv::Mat & matImage,cv::Rect &bounding_rect){
         }
     }
                                     //negative index->all indexes are drawn  //negative thicknes(-1<2) CV_FILLED
-    drawContours(matImage, contours, largest_contour_index, cv::Scalar(100), 2, 8, hierarchy); // Draw the largest contour using previously stored index.
-    rectangle(matImage, bounding_rect, cvScalar(225, 225, 225, 0), 1, 8, 0);
+    //drawContours(matImage, contours, largest_contour_index, cv::Scalar(100), 2, 8, hierarchy); // Draw the largest contour using previously stored index.
+    //rectangle(matImage, bounding_rect, cvScalar(225, 225, 225, 0), 1, 8, 0);
+    rectangle(matImage, bounding_rect, cvScalar(0, 225, 0), 1, 8, 0);
     return;
 }
 
