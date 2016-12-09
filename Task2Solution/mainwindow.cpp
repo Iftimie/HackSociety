@@ -224,7 +224,7 @@ void MainWindow::on_startRecord_clicked()
             ThreadAnalize::shapePoints[i].x+=offsetX;
             ThreadAnalize::shapePoints[i].y+=offsetY;
         }
-        Mat img(width, height, CV_8U);
+        Mat img(height, width, CV_8U);
         img = cv::Scalar(255);
         cv::cvtColor(img,img,COLOR_GRAY2BGR);
         circle(img, Point2f(ThreadAnalize::shapePoints[0].x,ThreadAnalize::shapePoints[0].y), 3, cv::Scalar(0, 255, 0), -1, 8);
