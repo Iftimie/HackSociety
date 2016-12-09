@@ -237,7 +237,7 @@ void MainWindow::on_startRecord_clicked()
         for(int i=1;i<ThreadAnalize::shapePoints.size();i++){
             cv::line(img, ThreadAnalize::shapePoints[i-1], ThreadAnalize::shapePoints[i], cv::Scalar(0, 0, 0), 3, 8,0);
         }
-        GaussianBlur( img, img, Size( 11, 11 ), 0, 0 );
+        GaussianBlur( img, img, Size( ThreadAnalize::blur, ThreadAnalize::blur ), 0, 0 );
         cv::imshow("reuslt",GetSquareImage(img,100));
         cv::waitKey(30);
     }
@@ -556,4 +556,39 @@ void MainWindow::loadDetectionData(vector<arma::Mat<double>>& training_data){
         }
         fclose(def);
     }
+}
+
+void MainWindow::on_horizontalSlider_2_valueChanged(int value)
+{
+    ThreadAnalize::blur = value;
+}
+
+void MainWindow::on_sliMinH_valueChanged(int value)
+{
+    ThreadAnalize::minH=value;
+}
+
+void MainWindow::on_sliMaxH_valueChanged(int value)
+{
+    ThreadAnalize::maxH=value;
+}
+
+void MainWindow::on_sliMinS_valueChanged(int value)
+{
+    ThreadAnalize::minS=value;
+}
+
+void MainWindow::on_sliMaxS_valueChanged(int value)
+{
+    ThreadAnalize::maxS=value;
+}
+
+void MainWindow::on_sliMinV_valueChanged(int value)
+{
+    ThreadAnalize::minV=value;
+}
+
+void MainWindow::on_sliMaxV_valueChanged(int value)
+{
+    ThreadAnalize::maxV=value;
 }

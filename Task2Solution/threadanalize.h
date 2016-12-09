@@ -20,6 +20,7 @@ public:
     static int minV;
     static int maxV;
     static int erosin;
+    static int blur;
     static bool startRecord;
     static vector<Point2f> shapePoints;
 

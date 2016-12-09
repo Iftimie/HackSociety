@@ -68,6 +68,20 @@ private slots:
 
     void on_doubleSpinBox_valueChanged(double arg1);
 
+    void on_horizontalSlider_2_valueChanged(int value);
+
+    void on_sliMaxV_valueChanged(int value);
+
+    void on_sliMinV_valueChanged(int value);
+
+    void on_sliMinH_valueChanged(int value);
+
+    void on_sliMaxH_valueChanged(int value);
+
+    void on_sliMinS_valueChanged(int value);
+
+    void on_sliMaxS_valueChanged(int value);
+
 private:
     Ui::MainWindow *ui;
     ThreadWebCam *threadWebcam;

@@ -12,6 +12,7 @@ int ThreadAnalize::maxS=0;
 int ThreadAnalize::minV=0;
 int ThreadAnalize::maxV=0;
 int ThreadAnalize::erosin=0;
+int ThreadAnalize::blur=11;
 bool ThreadAnalize::startRecord=false;
 vector<Point2f> ThreadAnalize::shapePoints;
 
