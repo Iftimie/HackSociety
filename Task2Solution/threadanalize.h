@@ -22,6 +22,7 @@ public:
 public:
     ThreadAnalize(QObject *parent );
     void colorFilter(Mat &frame,Mat &hsv);
+    void findBiggestBlob(cv::Mat & matImage,cv::Rect &bounding_rect);
 
     void run();
 

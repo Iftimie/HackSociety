@@ -18,7 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
     this->threadWebcam->start();
 
     this->threadAnalize = new ThreadAnalize(this);
-    connect(this->threadAnalize,SIGNAL(analizeBinaryResult()),this,SLOT(on_imageWebcamChanged()));
+    connect(this->threadAnalize,SIGNAL(analizeBinaryResult()),this,SLOT(on_analizeBinaryResult()));
     this->threadAnalize->start();
 }
 
