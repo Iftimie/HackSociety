@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "threadwebcam.h"
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 Mat MainWindow::image0;
 Mat MainWindow::image1;
@@ -179,4 +180,58 @@ Mat* MainWindow::storeGetProcImage(Mat *img, char* action, int slot) {
 void MainWindow::on_horizontalSlider_valueChanged(int value)
 {
     ThreadAnalize::erosin = value;
+}
+
+void MainWindow::on_startRecord_clicked()
+{
+    if(this->ui->startRecord->text()=="Start Record"){
+        ThreadAnalize::shapePoints.clear();
+        ThreadAnalize::startRecord=true;
+        this->ui->startRecord->setText("Stop Record");
+    }else{
+        ThreadAnalize::startRecord=false;
+        this->ui->startRecord->setText("Start Record");
+        int minX=99999;
+        int minY=99999;
+        int maxX=0;
+        int maxY=0;
+        for(int i=0;i<ThreadAnalize::shapePoints.size();i++){
+            if(ThreadAnalize::shapePoints[i].x<minX){
+                minX =ThreadAnalize::shapePoints[i].x;
+            }
+            if(ThreadAnalize::shapePoints[i].x>maxX){
+                maxX = ThreadAnalize::shapePoints[i].x;
+            }
+            if(ThreadAnalize::shapePoints[i].y<minY){
+                minY = ThreadAnalize::shapePoints[i].y;
+            }
+            if(ThreadAnalize::shapePoints[i].y>maxY){
+                maxY = ThreadAnalize::shapePoints[i].y;
+            }
+        }
+
+        int diffX = maxX-minX;
+        int diffY = maxY-minY;
+        int width = diffX*1.2;
+        int height = diffY*1.2;
+
+        int offsetX = (width-diffX)/2;
+        int offsetY = (height-diffY)/2;
+
+        for(int i=0;i<ThreadAnalize::shapePoints.size();i++){
+            ThreadAnalize::shapePoints[i].x-=minX;
+            ThreadAnalize::shapePoints[i].y-=minY;
+            ThreadAnalize::shapePoints[i].x+=offsetX;
+            ThreadAnalize::shapePoints[i].y+=offsetY;
+        }
+        Mat img(width, height, CV_8U);
+        img = cv::Scalar(255);
+        cv::cvtColor(img,img,COLOR_GRAY2BGR);
+        circle(img, Point2f(ThreadAnalize::shapePoints[0].x,ThreadAnalize::shapePoints[0].y), 3, cv::Scalar(0, 255, 0), -1, 8);
+        for(int i=1;i<ThreadAnalize::shapePoints.size();i++){
+            cv::line(img, ThreadAnalize::shapePoints[i-1], ThreadAnalize::shapePoints[i], cv::Scalar(0, 0, 0), 3, 8,0);
+        }
+        cv::imshow("reuslt",img);
+        cv::waitKey(30);
+    }
 }

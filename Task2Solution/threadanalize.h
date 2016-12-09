@@ -4,6 +4,8 @@
 #include <QtCore>
 #include <QtWidgets/QMainWindow>
 #include <opencv2/core/core.hpp>
+#include <vector>
+using namespace std;
 
 using namespace cv;
 
@@ -18,6 +20,8 @@ public:
     static int minV;
     static int maxV;
     static int erosin;
+    static bool startRecord;
+    static vector<Point2f> shapePoints;
 
 public:
     ThreadAnalize(QObject *parent );

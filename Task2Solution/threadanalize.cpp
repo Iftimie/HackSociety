@@ -12,6 +12,8 @@ int ThreadAnalize::maxS=0;
 int ThreadAnalize::minV=0;
 int ThreadAnalize::maxV=0;
 int ThreadAnalize::erosin=0;
+bool ThreadAnalize::startRecord=false;
+vector<Point2f> ThreadAnalize::shapePoints;
 
 ThreadAnalize::ThreadAnalize(QObject *parent):QThread(parent){
 
@@ -32,6 +34,9 @@ void ThreadAnalize::run(){
         findBiggestBlob(hsv1,bounding_rect);
         int x = bounding_rect.x+bounding_rect.width/2;
         int y  =bounding_rect.y+bounding_rect.height/2;
+        if(ThreadAnalize::startRecord==true){
+            shapePoints.push_back(Point2f(x,y));
+        }
 
 
         cv::cvtColor(hsv0,hsv0,COLOR_GRAY2BGR);
@@ -78,7 +83,7 @@ void ThreadAnalize::findBiggestBlob(cv::Mat & matImage,cv::Rect &bounding_rect){
                                     //negative index->all indexes are drawn  //negative thicknes(-1<2) CV_FILLED
     //drawContours(matImage, contours, largest_contour_index, cv::Scalar(100), 2, 8, hierarchy); // Draw the largest contour using previously stored index.
     //rectangle(matImage, bounding_rect, cvScalar(225, 225, 225, 0), 1, 8, 0);
-    rectangle(matImage, bounding_rect, cvScalar(0, 225, 0), 1, 8, 0);
+    //rectangle(matImage, bounding_rect, cvScalar(0, 225, 0), 1, 8, 0);
     return;
 }
 
