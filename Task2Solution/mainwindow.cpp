@@ -231,7 +231,7 @@ void MainWindow::on_startRecord_clicked()
         for(int i=1;i<ThreadAnalize::shapePoints.size();i++){
             cv::line(img, ThreadAnalize::shapePoints[i-1], ThreadAnalize::shapePoints[i], cv::Scalar(0, 0, 0), 3, 8,0);
         }
-        cv::imshow("reuslt",GetSquareImage(img,100));
+        cv::imshow("reuslt",GetSquareImage(img,300));
         cv::waitKey(30);
     }
 }
