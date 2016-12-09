@@ -21,6 +21,9 @@ MainWindow::MainWindow(QWidget *parent) :
     this->threadAnalize = new ThreadAnalize(this);
     connect(this->threadAnalize,SIGNAL(analizeBinaryResult()),this,SLOT(on_analizeBinaryResult()));
     this->threadAnalize->start();
+
+    strcpy(this->outputVector,"1 0 0 0 0 0 0");
+    this->indexStart=0;
 }
 
 MainWindow::~MainWindow()
@@ -231,7 +234,7 @@ void MainWindow::on_startRecord_clicked()
         for(int i=1;i<ThreadAnalize::shapePoints.size();i++){
             cv::line(img, ThreadAnalize::shapePoints[i-1], ThreadAnalize::shapePoints[i], cv::Scalar(0, 0, 0), 3, 8,0);
         }
-        cv::imshow("reuslt",GetSquareImage(img,300));
+        cv::imshow("reuslt",GetSquareImage(img,100));
         cv::waitKey(30);
     }
 }
@@ -267,4 +270,198 @@ cv::Mat MainWindow::GetSquareImage( const cv::Mat& img, int target_width)
     cv::resize( img, square( roi ), roi.size() );
 
     return square;
+}
+
+void MainWindow::on_radioButton_clicked()
+{
+    strcpy(this->outputVector,"1 0 0 0 0 0 0");
+}
+
+void MainWindow::on_radioButton_2_clicked()
+{
+    strcpy(this->outputVector,"0 1 0 0 0 0 0");
+}
+
+void MainWindow::on_radioButton_3_clicked()
+{
+    strcpy(this->outputVector,"0 0 1 0 0 0 0");
+}
+
+void MainWindow::on_radioButton_4_clicked()
+{
+    strcpy(this->outputVector,"0 0 0 1 0 0 0");
+}
+
+void MainWindow::on_radioButton_5_clicked()
+{
+    strcpy(this->outputVector,"0 0 0 0 1 0 0");
+}
+
+void MainWindow::on_radioButton_6_clicked()
+{
+    strcpy(this->outputVector,"0 0 0 0 0 1 0");
+}
+
+void MainWindow::on_radioButton_7_clicked()
+{
+    strcpy(this->outputVector,"0 0 0 0 0 0 1");
+}
+
+void MainWindow::on_spinBox_valueChanged(int arg1)
+{
+    this->indexStart=arg1;
+}
+
+void MainWindow::on_saveAndNext_clicked()
+{
+    Mat copyImage;
+
+
+    for(double deg = -12;deg<12;deg+=6){
+        for(int dx=-15;dx<15;dx+=10){
+            for(int dy = -15;dy<15;dy+=10){
+                MyLabel::img.copyTo(copyImage);
+                copyImage = this->rotate_and_crop(deg,copyImage);
+                copyImage = this->translateImg(copyImage,dx,dy);
+                char filename[100];
+                sprintf(filename,"trainingImages/img%d.jpg",indexStart);
+                imwrite(filename,copyImage);
+
+                sprintf(filename,"trainingImages/img%d.jpg %s",indexStart++,this->outputVector);
+                appendToFile("trainingImages/def.txt",filename);
+            }
+        }
+    }
+    MyLabel::img = Mat(300, 300, CV_8U);
+    MyLabel::img = cv::Scalar(255);
+    cv::cvtColor(MyLabel::img,MyLabel::img,COLOR_GRAY2BGR);
+}
+
+cv::Rect MainWindow::getLargestRect(double imageWidth, double imageHeight, double rotAngDeg, int type){
+    Rect rect;
+    double rotateAngleDeg = std::fmod(rotAngDeg, 180);
+    if (rotateAngleDeg < 0){
+        rotateAngleDeg += 360;
+        rotateAngleDeg = std::fmod(rotateAngleDeg, 180);;
+    }
+    double imgWidth = imageWidth;
+    double imgHeight = imageHeight;
+    if (rotateAngleDeg == 0 || rotateAngleDeg == 180){
+        //Angle is 0, no change needed
+        rect = Rect(0, 0, (int)imgHeight, (int)imgWidth);
+        return rect;
+    }
+    if (rotateAngleDeg > 90){
+        // Angle > 90 therefore angle = 90 - ("+rotateAngleDeg+" - 90) = "+(90 - (rotateAngleDeg - 90))
+        rotateAngleDeg = 90 - (rotateAngleDeg - 90);
+    }
+    double rotateAngle = (rotateAngleDeg*M_PI) / 180.;
+    double sinRotAng = sin(rotateAngle);
+    double cosRotAng = cos(rotateAngle);
+    double tanRotAng = tan(rotateAngle);
+    // Point 1 of rotated rectangle
+    double x1 = sinRotAng * imgHeight;
+    double y1 = 0;
+    // Point 2 of rotated rectangle
+    double x2 = cosRotAng * imgWidth + x1;
+    double y2 = sinRotAng * imgWidth;
+    // Point 3 of rotated rectangle
+    double x3 = x2 - x1;
+    double y3 = y2 + cosRotAng * imgHeight;
+    // Point 4 of rotated rectangle
+    double x4 = 0;
+    double y4 = y3 - y2;
+    // MidPoint of rotated image
+    double midx = x2 / 2;
+    double midy = y3 / 2;
+
+    // Angle for new rectangle (based on image width and height)
+    double imgAngle = atan(imgHeight / imgWidth);
+    double imgRotAngle = atan(imgWidth / imgHeight);
+    double tanImgAng = tan(imgAngle);
+    double tanImgRotAng = tan(imgRotAngle);
+    // X Point for new rectangle on bottom line
+    double ibx1 = midy / tanImgAng + midx;
+    double ibx2 = midy * tanImgAng + midx;
+
+    // First intersecting lines
+    // y = ax + b  ,  y = cx + d  ==>  x = (d - b) / (a - c)
+    double a = y2 / x3;
+    double b = tanRotAng * -x1;
+    double c = -imgHeight / imgWidth;
+    double d = tanImgAng * ibx1;
+
+    // Intersecting point 1
+    double ix1 = (d - b) / (a - c);
+    double iy1 = a * ix1 + b;
+
+    // Second intersecting lines
+    c = -imgWidth / imgHeight;
+    d = tanImgRotAng * ibx2;
+
+    // Intersecting point 2
+    double ix2 = (d - b) / (a - c);
+    double iy2 = a * ix2 + b;
+
+    // Work out smallest rectangle
+    double radx1 = abs(midx - ix1);
+    double rady1 = abs(midy - iy1);
+    double radx2 = abs(midx - ix2);
+    double rady2 = abs(midy - iy2);
+    // Work out area of rectangles
+    double area1 = radx1 * rady1;
+    double area2 = radx2 * rady2;
+
+    Rect rect1 = Rect((int)round(midx - radx1), (int)round(midy - rady1), (int)round(radx1 * 2), (int)round(rady1 * 2));
+    Rect rect2 = Rect((int)round(midx - radx2), (int)round(midy - rady2), (int)round(radx2 * 2), (int)round(rady2 * 2));
+    switch (type) {
+    case 0: rect = (area1 > area2 ? rect1 : rect2); break;
+    case 1: rect = (area1 < area2 ? rect1 : rect2); break;
+    case 2: rect = (radx1 > radx2 ? rect1 : rect2); break;
+    case 3: rect = (rady1 > rady2 ? rect1 : rect2); break;
+    }
+
+    return rect;
+}
+
+cv::Mat MainWindow::rotate_and_crop(double angle,cv::Mat &mat){
+    cv::Point2f center(mat.cols / 2.0, mat.rows / 2.0);
+    cv::Mat rot = cv::getRotationMatrix2D(center, angle, 1.0);
+    cv::Rect bbox = cv::RotatedRect(center, mat.size(), angle).boundingRect();
+    rot.at<double>(0, 2) += bbox.width / 2.0 - center.x;
+    rot.at<double>(1, 2) += bbox.height / 2.0 - center.y;
+    cv::Mat dst;
+    cv::warpAffine(mat, dst, rot, bbox.size());
+    Rect rect = getLargestRect(mat.rows, mat.cols, angle, 0);
+    cv::Mat cropped = dst(rect);
+    return cropped;
+}
+
+void MainWindow::appendToFile(char* fileName, char* textToAppend){
+    FILE *file = fopen(fileName, "a");
+    if (file == NULL) {
+        perror("Error opening file.");
+    }
+    else {
+        fseek(file, 0, SEEK_END);
+        fprintf(file, "%s\n", textToAppend);
+        fclose(file);
+    }
+}
+
+void MainWindow::on_pushButton_clicked()
+{
+    FILE *file = fopen("trainingImages/def.txt", "w");
+        if (file == NULL) {
+            perror("Error opening file.");
+        }
+        else {
+            fclose(file);
+        }
+}
+
+Mat MainWindow::translateImg(Mat &img, int offsetx, int offsety){
+    Mat trans_mat = (Mat_<double>(2,3) << 1, 0, offsetx, 0, 1, offsety);
+    warpAffine(img,img,trans_mat,img.size());
+    return trans_mat;
 }

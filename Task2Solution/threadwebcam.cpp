@@ -11,8 +11,8 @@ ThreadWebCam::ThreadWebCam(QObject *parent):QThread(parent){
 
 void ThreadWebCam::run(){
 
-    VideoCapture webcam0(0);
-    VideoCapture webcam1(1);
+    VideoCapture webcam0(1);
+    VideoCapture webcam1(0);
     QThread::msleep(1000);
     Mat image0;
     Mat image1;
