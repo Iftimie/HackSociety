@@ -108,6 +108,8 @@ private:
     char outputVector[100];
     int indexStart;
 
+    Mat vectorOfShapes[7];
+
     void saveBinarizationParams(int hmin, int hmax, int smin, int smax, int vmin, int vmax,int erosin);
     void loadBinarizationParams(int& hmin, int& hmax, int& smin, int& smax, int& vmin, int& vmax,int &erosin);
     cv::Mat GetSquareImage( const cv::Mat& img, int target_width );
@@ -116,6 +118,8 @@ private:
     cv::Mat rotate_and_crop(double angle,cv::Mat &mat);
     cv::Rect getLargestRect(double imageWidth, double imageHeight, double rotAngDeg, int type);
     cv::Mat fromPointsToMat();
+    void findClass(int resultClass,char * result);
+    void repaintFlowchart();
 };
 
 #endif // MAINWINDOW_H

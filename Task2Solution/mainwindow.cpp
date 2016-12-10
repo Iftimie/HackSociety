@@ -23,6 +23,21 @@ MainWindow::MainWindow(QWidget *parent) :
 
     strcpy(this->outputVector,"1 0 0 0 0 0 0");
     this->indexStart=0;
+
+    vectorOfShapes[0]= imread("upArrow.JPG");
+    cv::resize(vectorOfShapes[0],vectorOfShapes[0],Size(50,50));
+    vectorOfShapes[1]= imread("downArrow.JPG");
+    cv::resize(vectorOfShapes[1],vectorOfShapes[1],Size(50,50));
+    vectorOfShapes[2]= imread("leftArrow.JPG");
+    cv::resize(vectorOfShapes[2],vectorOfShapes[2],Size(50,50));
+    vectorOfShapes[3]= imread("rightArrow.JPG");
+    cv::resize(vectorOfShapes[3],vectorOfShapes[3],Size(50,50));
+    vectorOfShapes[4]= imread("squareArrow.JPG");
+    cv::resize(vectorOfShapes[4],vectorOfShapes[4],Size(50,50));
+    vectorOfShapes[5]= imread("circleArrow.JPG");
+    cv::resize(vectorOfShapes[5],vectorOfShapes[5],Size(50,50));
+    vectorOfShapes[6]= imread("diamontArrow.JPG");
+    cv::resize(vectorOfShapes[6],vectorOfShapes[6],Size(50,50));
 }
 
 MainWindow::~MainWindow()
@@ -614,6 +629,72 @@ void MainWindow::on_classify(){
     arma::Mat<double> output = this->net->feedForward(image);
     int resultClass = output.index_max();
     qDebug()<<"Result class "<<resultClass;
+    char result[100];
+    findClass(resultClass,result);
+
+    QMessageBox msgBox;
+    if(ThreadAnalize::grid[ThreadAnalize::currentPositionX][ThreadAnalize::currentPositionY]==-1){
+         msgBox.setText(QString::asprintf("Keep %s?",result));
+    }else{
+         msgBox.setText(QString::asprintf("Overwrite with %s?",result));
+    }
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+    int res = msgBox.exec();
+    if(res == QMessageBox::Yes){
+        ThreadAnalize::grid[ThreadAnalize::currentPositionX][ThreadAnalize::currentPositionY]=resultClass;
+        repaintFlowchart();
+    }else{
+
+    }
+}
+
+void MainWindow::repaintFlowchart(){
+    Mat whiteImage(11*50, 11*50, CV_8U);
+    whiteImage= Scalar(255);
+    cv::cvtColor(whiteImage,whiteImage,COLOR_GRAY2BGR);
+
+    for(int i=0;i<11;i++){
+        for(int j=0;j<11;j++){
+            if(ThreadAnalize::grid[i][j]==0){
+                this->vectorOfShapes[0].copyTo(whiteImage(Rect(i*50, i*50, 50, 50)));
+            }else if(ThreadAnalize::grid[i][j]==1){
+                this->vectorOfShapes[1].copyTo(whiteImage(Rect(i*50, i*50, 50, 50)));
+            }else if(ThreadAnalize::grid[i][j]==2){
+                this->vectorOfShapes[2].copyTo(whiteImage(Rect(i*50, i*50, 50, 50)));
+            }else if(ThreadAnalize::grid[i][j]==3){
+                this->vectorOfShapes[3].copyTo(whiteImage(Rect(i*50, i*50, 50, 50)));
+            }else if(ThreadAnalize::grid[i][j]==4){
+                this->vectorOfShapes[4].copyTo(whiteImage(Rect(i*50, i*50, 50, 50)));
+            }else if(ThreadAnalize::grid[i][j]==5){
+                this->vectorOfShapes[5].copyTo(whiteImage(Rect(i*50, i*50, 50, 50)));
+            }else if(ThreadAnalize::grid[i][j]==6){
+                this->vectorOfShapes[6].copyTo(whiteImage(Rect(i*50, i*50, 50, 50)));
+            }
+        }
+    }
+    cvtColor(whiteImage, whiteImage, CV_BGR2RGB);
+    QImage imdisplay0((uchar*)whiteImage.data, whiteImage.cols, whiteImage.rows, whiteImage.step, QImage::Format_RGB888); //Converts the CV image into Qt standard format
+    int w = this->ui->lblFlowChart->width();
+    int h = this->ui->lblFlowChart->height();
+    this->ui->lblFlowChart->setPixmap(QPixmap::fromImage(imdisplay0).scaled(w,h,Qt::KeepAspectRatio));
+}
+
+void MainWindow::findClass(int resultClass,char * result){
+    if(resultClass==0){
+        strcpy(result,"Up arrow");
+    }else if(resultClass==1){
+        strcpy(result,"Down arrow");
+    }else if(resultClass==2){
+        strcpy(result,"Left arrow");
+    }else if(resultClass==3){
+        strcpy(result,"Right arrow");
+    }else if(resultClass==4){
+        strcpy(result,"Square");
+    }else if(resultClass==5){
+        strcpy(result,"Circle");
+    }else if(resultClass==6){
+        strcpy(result,"Diamond");
+    }
 }
 
 void MainWindow::on_displayShape(){

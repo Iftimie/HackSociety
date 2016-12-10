@@ -24,8 +24,12 @@ public:
     static bool startRecord;
     static vector<Point2f> shapePoints;
     static char grid[11][11];
-    static int nextPos;
+    static int currentPositionX;
+    static int currentPositionY;
     static int touchPosition;
+    bool settingPosition;
+
+
 
 public:
     ThreadAnalize(QObject *parent );

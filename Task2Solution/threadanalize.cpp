@@ -16,11 +16,17 @@ int ThreadAnalize::blur=11;
 bool ThreadAnalize::startRecord=false;
 vector<Point2f> ThreadAnalize::shapePoints;
 char ThreadAnalize::grid[11][11];
-int ThreadAnalize::nextPos=1;
+int ThreadAnalize::currentPositionX=5;
+int ThreadAnalize::currentPositionY=5;
 int ThreadAnalize::touchPosition=20;
 
 ThreadAnalize::ThreadAnalize(QObject *parent):QThread(parent){
-
+    this->settingPosition=true;
+    for(int i=0;i<11;i++){
+        for(int j=0;j<11;j++){
+            grid[i][j]=-1;
+        }
+    }
 }
 
 void ThreadAnalize::run(){
@@ -108,16 +114,30 @@ void ThreadAnalize::findBiggestBlob(cv::Mat & matImage,cv::Rect &bounding_rect){
 }
 
 void ThreadAnalize::nextPosition(int x,int y,int width,int height){
-    if(y<40 && x>40 && x<width-80){
-        nextPos = 0;//top
-    }else if(y>height-80 && x>40 && x<width-80){
-        nextPos =2 ;//down
-    }else if(x<40 && y > 40 && y<height-80){
-        nextPos =3 ;//left
-    }else if(x>width-80 && y > 40 && y<height-80){
-        nextPos =2 ;//down
+    if(y<40 && x>40 && x<width-80 && this->settingPosition==false){
+        currentPositionY--;//top
+        this->settingPosition=true;
+    }else if(y>height-80 && x>40 && x<width-80  && this->settingPosition==false){
+        currentPositionY++ ;//down
+        this->settingPosition=true;
+    }else if(x<40 && y > 40 && y<height-80  && this->settingPosition==false){
+        currentPositionX--;//left
+        this->settingPosition=true;
+    }else if(x>width-80 && y > 40 && y<height-80  && this->settingPosition==false){
+        currentPositionX++;//down
+        this->settingPosition=true;
+    }else if(y>40 && y<height-80 && x >40 && x<width-80  && this->settingPosition==false){
+        settingPosition=false;
     }
-    qDebug()<<nextPos;
+    if(currentPositionX>=11)
+        currentPositionX=10;
+    if(currentPositionX<0)
+        currentPositionX=0;
+    if(currentPositionY>=11)
+        currentPositionY=10;
+    if(currentPositionY<0)
+        currentPositionY=0;
+    qDebug()<<currentPositionX<<" "<<currentPositionY;
 }
 
  void ThreadAnalize::touch(int x,int y,int width,int height){
