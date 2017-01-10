@@ -4,6 +4,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <QMessageBox>
+#include <QtXml>
 
 Mat MainWindow::image0;
 Mat MainWindow::image1;
@@ -24,19 +25,19 @@ MainWindow::MainWindow(QWidget *parent) :
     strcpy(this->outputVector,"1 0 0 0 0 0 0");
     this->indexStart=0;
 
-    vectorOfShapes[0]= imread("upArrow.JPG");
+    vectorOfShapes[0]= imread("up.jpg", CV_LOAD_IMAGE_COLOR);
     cv::resize(vectorOfShapes[0],vectorOfShapes[0],Size(50,50));
-    vectorOfShapes[1]= imread("downArrow.JPG");
+    vectorOfShapes[1]= imread("down.jpg", CV_LOAD_IMAGE_COLOR);
     cv::resize(vectorOfShapes[1],vectorOfShapes[1],Size(50,50));
-    vectorOfShapes[2]= imread("leftArrow.JPG");
+    vectorOfShapes[2]= imread("left.jpg", CV_LOAD_IMAGE_COLOR);
     cv::resize(vectorOfShapes[2],vectorOfShapes[2],Size(50,50));
-    vectorOfShapes[3]= imread("rightArrow.JPG");
+    vectorOfShapes[3]= imread("right.jpg", CV_LOAD_IMAGE_COLOR);
     cv::resize(vectorOfShapes[3],vectorOfShapes[3],Size(50,50));
-    vectorOfShapes[4]= imread("squareArrow.JPG");
+    vectorOfShapes[4]= imread("sqr.jpg", CV_LOAD_IMAGE_COLOR);
     cv::resize(vectorOfShapes[4],vectorOfShapes[4],Size(50,50));
-    vectorOfShapes[5]= imread("circleArrow.JPG");
+    vectorOfShapes[5]= imread("circ.jpg", CV_LOAD_IMAGE_COLOR);
     cv::resize(vectorOfShapes[5],vectorOfShapes[5],Size(50,50));
-    vectorOfShapes[6]= imread("diamontArrow.JPG");
+    vectorOfShapes[6]= imread("dmd.jpg", CV_LOAD_IMAGE_COLOR);
     cv::resize(vectorOfShapes[6],vectorOfShapes[6],Size(50,50));
 }
 
@@ -68,10 +69,14 @@ void MainWindow::on_imageWebcamChanged(){
 }
 
 void MainWindow::on_analizeBinaryResult(){
+    this->ui->labelPosition->setText(QString::asprintf("X = %d, Y = %d", ThreadAnalize::currentPositionX, ThreadAnalize::currentPositionY));
+
     Mat *resized0 =MainWindow::storeGetProcImage(nullptr,"EX",0);
     Mat *resized1 =MainWindow::storeGetProcImage(nullptr,"EX",1);
     cvtColor(*resized0, *resized0, CV_BGR2RGB);
     cvtColor(*resized1, *resized1, CV_BGR2RGB);
+    cv::flip(*resized1,*resized1,0);
+    cv::flip(*resized1,*resized1,1);
     QImage imdisplay0((uchar*)resized0->data, resized0->cols, resized0->rows, resized0->step, QImage::Format_RGB888); //Converts the CV image into Qt standard format
     QImage imdisplay1((uchar*)resized1->data, resized1->cols, resized1->rows, resized1->step, QImage::Format_RGB888);
     int w = this->ui->resultTop->width();
@@ -636,12 +641,49 @@ void MainWindow::on_classify(){
     if(ThreadAnalize::grid[ThreadAnalize::currentPositionX][ThreadAnalize::currentPositionY]==-1){
          msgBox.setText(QString::asprintf("Keep %s?",result));
     }else{
-         msgBox.setText(QString::asprintf("Overwrite with %s?",result));
+        if(resultClass>=0 &&resultClass<=3){
+            msgBox.setText(QString::asprintf("Keep %s?",result));
+        }else{
+            msgBox.setText(QString::asprintf("Overwrite with %s?",result));
+        }
     }
     msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
     int res = msgBox.exec();
     if(res == QMessageBox::Yes){
-        ThreadAnalize::grid[ThreadAnalize::currentPositionX][ThreadAnalize::currentPositionY]=resultClass;
+        if(resultClass==0){
+            ThreadAnalize::currentPositionY--;
+            if(ThreadAnalize::currentPositionY<0)ThreadAnalize::currentPositionY=0;
+            ThreadAnalize::grid[ThreadAnalize::currentPositionX][ThreadAnalize::currentPositionY]=resultClass;
+            ThreadAnalize::currentPositionY--;
+            if(ThreadAnalize::currentPositionY<0)ThreadAnalize::currentPositionY=0;
+        }else if(resultClass ==1){
+            ThreadAnalize::currentPositionY++;
+            if(ThreadAnalize::currentPositionY > 10)ThreadAnalize::currentPositionY=10;
+            ThreadAnalize::grid[ThreadAnalize::currentPositionX][ThreadAnalize::currentPositionY]=resultClass;
+            ThreadAnalize::currentPositionY++;
+            if(ThreadAnalize::currentPositionY>10)ThreadAnalize::currentPositionY=10;
+        }
+        else if(resultClass == 2){
+                    ThreadAnalize::currentPositionX--;
+
+                    if(ThreadAnalize::currentPositionX<0)
+                        ThreadAnalize::currentPositionX=0;
+                    ThreadAnalize::grid[ThreadAnalize::currentPositionX][ThreadAnalize::currentPositionY]=resultClass;
+
+                    ThreadAnalize::currentPositionX--;
+                    if(ThreadAnalize::currentPositionX<0)
+                        ThreadAnalize::currentPositionX=0;
+        }
+        else if(resultClass == 3){
+                    ThreadAnalize::currentPositionX++;
+                    if(ThreadAnalize::currentPositionX>10)ThreadAnalize::currentPositionX=10;
+                    ThreadAnalize::grid[ThreadAnalize::currentPositionX][ThreadAnalize::currentPositionY]=resultClass;
+                    ThreadAnalize::currentPositionX++;
+                    if(ThreadAnalize::currentPositionX>10)ThreadAnalize::currentPositionX=10;
+        }
+        else
+            ThreadAnalize::grid[ThreadAnalize::currentPositionX][ThreadAnalize::currentPositionY]=resultClass;
+
         repaintFlowchart();
     }else{
 
@@ -656,19 +698,19 @@ void MainWindow::repaintFlowchart(){
     for(int i=0;i<11;i++){
         for(int j=0;j<11;j++){
             if(ThreadAnalize::grid[i][j]==0){
-                this->vectorOfShapes[0].copyTo(whiteImage(Rect(i*50, i*50, 50, 50)));
+                this->vectorOfShapes[0].copyTo(whiteImage(Rect(i*50, j*50, 50, 50)));
             }else if(ThreadAnalize::grid[i][j]==1){
-                this->vectorOfShapes[1].copyTo(whiteImage(Rect(i*50, i*50, 50, 50)));
+                this->vectorOfShapes[1].copyTo(whiteImage(Rect(i*50, j*50, 50, 50)));
             }else if(ThreadAnalize::grid[i][j]==2){
-                this->vectorOfShapes[2].copyTo(whiteImage(Rect(i*50, i*50, 50, 50)));
+                this->vectorOfShapes[2].copyTo(whiteImage(Rect(i*50, j*50, 50, 50)));
             }else if(ThreadAnalize::grid[i][j]==3){
-                this->vectorOfShapes[3].copyTo(whiteImage(Rect(i*50, i*50, 50, 50)));
+                this->vectorOfShapes[3].copyTo(whiteImage(Rect(i*50, j*50, 50, 50)));
             }else if(ThreadAnalize::grid[i][j]==4){
-                this->vectorOfShapes[4].copyTo(whiteImage(Rect(i*50, i*50, 50, 50)));
+                this->vectorOfShapes[4].copyTo(whiteImage(Rect(i*50, j*50, 50, 50)));
             }else if(ThreadAnalize::grid[i][j]==5){
-                this->vectorOfShapes[5].copyTo(whiteImage(Rect(i*50, i*50, 50, 50)));
+                this->vectorOfShapes[5].copyTo(whiteImage(Rect(i*50, j*50, 50, 50)));
             }else if(ThreadAnalize::grid[i][j]==6){
-                this->vectorOfShapes[6].copyTo(whiteImage(Rect(i*50, i*50, 50, 50)));
+                this->vectorOfShapes[6].copyTo(whiteImage(Rect(i*50, j*50, 50, 50)));
             }
         }
     }
@@ -750,6 +792,13 @@ cv::Mat MainWindow::fromPointsToMat(){
         copyVector[i].y+=offsetY;
     }
     Mat img(height, width, CV_8U);
+    if(height == 0 || width == 0) {
+        qDebug()<<"[SEVERE ERROR] h:" << height << " w:" << width;
+        Mat imgReturnWhite(100, 100, CV_8U);
+        imgReturnWhite = cv::Scalar(255);
+        cv::cvtColor(imgReturnWhite,imgReturnWhite,COLOR_GRAY2BGR);
+        return imgReturnWhite;
+    }
     img = cv::Scalar(255);
     cv::cvtColor(img,img,COLOR_GRAY2BGR);
     circle(img, Point2f(copyVector[0].x,copyVector[0].y), 3, cv::Scalar(0, 0, 0), -1, 8);
@@ -796,4 +845,281 @@ void MainWindow::on_loadNetwork_clicked()
         sprintf(buffer,"b%d.mat",i);
         net->biases[i].load(buffer);
     }
+}
+
+void MainWindow::on_btn_xml_clicked()
+{
+    this->holder.clear();
+
+    QFile xmlFile("schema.xgml");
+    if(!xmlFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qDebug("Error on schema.xgml IO");
+        return;
+    }
+
+    QDomDocument doc;
+
+//    QDomElement xml = doc.createElement("xml");
+//    xml.setAttribute("encoding", "Cp1252");
+//    xml.setAttribute("version", "1.0");
+//    doc.appendChild(xml);
+
+    QDomElement sections = doc.createElement("section");
+    sections.setAttribute("name", "xgml");
+
+        QDomElement creator = doc.createElement("attribute");
+        creator.setAttribute("key","Creator");
+        creator.setAttribute("type","String");
+        creator.appendChild(doc.createTextNode("yFiles"));
+        sections.appendChild(creator);
+
+        QDomElement version = doc.createElement("attribute");
+        version.setAttribute("key","Version");
+        version.setAttribute("type","String");
+        version.appendChild(doc.createTextNode("2.14"));
+        sections.appendChild(version);
+
+        QDomElement graph = doc.createElement("section");
+        graph.setAttribute("name","graph");
+
+            QDomElement hierarchic = doc.createElement("attribute");
+            hierarchic.setAttribute("key","hierarchic");
+            hierarchic.setAttribute("type","int");
+            hierarchic.appendChild(doc.createTextNode("1"));
+            graph.appendChild(hierarchic);
+
+            QDomElement label = doc.createElement("attribute");
+            label.setAttribute("key","label");
+            label.setAttribute("type","String");
+            label.appendChild(doc.createTextNode(""));
+            graph.appendChild(label);
+
+            QDomElement type = doc.createElement("attribute");
+            type.setAttribute("key","directed");
+            type.setAttribute("type","int");
+            type.appendChild(doc.createTextNode("1"));
+            graph.appendChild(type);
+
+            int id = 0;
+
+            for(int i=0; i < 11; i++){
+                for(int j=0; j < 11; j++)
+                {
+                    if(ThreadAnalize::grid[i][j] == 4)
+                    {
+                        QDomElement square = getShape(i,j,id,"rectangle",doc);
+                        graph.appendChild(square);
+
+                        this->holder.push_back(ShapeHolder(i,j,id));
+                        id++;
+                    }
+
+                    if(ThreadAnalize::grid[i][j] == 5)
+                    {
+                        QDomElement square = getShape(i,j,id,"ellipse",doc);
+                        graph.appendChild(square);
+
+                         this->holder.push_back(ShapeHolder(i,j,id));
+                        id++;
+                    }
+
+                    if(ThreadAnalize::grid[i][j] == 6)
+                    {
+                        QDomElement square = getShape(i,j,id,"diamond",doc);
+                        graph.appendChild(square);
+
+                        this->holder.push_back(ShapeHolder(i,j,id));
+                        id++;
+                    }
+
+                }
+            }
+
+            for (int i=0;i<11;i++){
+                for(int j=0;j<11;j++){
+                    printf("%d ",ThreadAnalize::grid[i][j]);
+                }
+                printf("\n");
+            }
+
+            for(int i=0; i < 11; i++){
+                for(int j=0; j < 11; j++)
+                {
+
+                    if(ThreadAnalize::grid[i][j] == 0)
+                    {
+                         int sourceId = getIdGivenXY(i,j+1);
+                         int targetId = getIdGivenXY(i,j-1);
+
+                        QDomElement line = getLine(sourceId,targetId, doc) ;
+                          graph.appendChild(line);
+                    }
+                    if(ThreadAnalize::grid[i][j] == 1)
+                    {
+                         int sourceId = getIdGivenXY(i,j-1);
+                         int targetId = getIdGivenXY(i,j+1);
+
+                        QDomElement line = getLine(sourceId,targetId, doc) ;
+                          graph.appendChild(line);
+                    }
+                    if(ThreadAnalize::grid[i][j] == 2)
+                    {
+                         int sourceId = getIdGivenXY(i+1,j);
+                         int targetId = getIdGivenXY(i-1,j);
+
+                        QDomElement line = getLine(sourceId,targetId, doc) ;
+                          graph.appendChild(line);
+                    }
+                    if(ThreadAnalize::grid[i][j] == 3)
+                    {
+                         int sourceId = getIdGivenXY(i-1,j);
+                         int targetId = getIdGivenXY(i+1,j);
+
+                        QDomElement line = getLine(sourceId,targetId, doc) ;
+                          graph.appendChild(line);
+                    }
+                }
+            }
+
+
+        sections.appendChild(graph);
+
+    doc.appendChild(sections);
+
+
+    QTextStream out(&xmlFile);
+    out << doc.toString();
+}
+
+QDomElement MainWindow::getLine(int sourceId, int targetId, QDomDocument doc) {
+    QDomElement line = doc.createElement("section");
+    line.setAttribute("name", "edge");
+
+        QDomElement source = doc.createElement("attribute");
+        source.setAttribute("key","source");
+        source.setAttribute("type","int");
+        source.appendChild(doc.createTextNode(QString::asprintf("%d",sourceId)));
+        line.appendChild(source);
+
+        QDomElement target = doc.createElement("attribute");
+        target.setAttribute("key","target");
+        target.setAttribute("type","int");
+        target.appendChild(doc.createTextNode(QString::asprintf("%d",targetId)));
+        line.appendChild(target);
+
+        QDomElement targetShow = doc.createElement("section");
+        targetShow.setAttribute("name", "graphics");
+            QDomElement filling = doc.createElement("attribute");
+            filling.setAttribute("key","fill");
+            filling.setAttribute("type","String");
+            filling.appendChild(doc.createTextNode("#000000"));
+            targetShow.appendChild(filling);
+
+            QDomElement targetArrow = doc.createElement("attribute");
+            targetArrow.setAttribute("key","targetArrow");
+            targetArrow.setAttribute("type","String");
+            targetArrow.appendChild(doc.createTextNode("standard"));
+            targetShow.appendChild(targetArrow);
+        line.appendChild(targetShow);
+
+        return line;
+}
+
+QDomElement MainWindow::getShape(int i, int j, int id, QString shapeType, QDomDocument doc)
+{
+    QDomElement square =  doc.createElement("section");
+    square.setAttribute("name","node");
+
+    QDomElement info = doc.createElement("attribute");
+    info.setAttribute("key","id");
+    info.setAttribute("type","int");
+    info.appendChild(doc.createTextNode(QString::asprintf("%d", id)));
+    square.appendChild(info);
+
+    QDomElement info2 = doc.createElement("attribute");
+    info2.setAttribute("key","label");
+    info2.setAttribute("label","String");
+    info2.appendChild(doc.createTextNode(""));
+    square.appendChild(info2);
+
+    QDomElement graphics = doc.createElement("section");
+    graphics.setAttribute("name","graphics");
+
+        QDomElement x = doc.createElement("attribute");
+        x.setAttribute("key","x");
+        x.setAttribute("type","double");
+        x.appendChild(doc.createTextNode(QString::asprintf("%d",i * 50)));
+        graphics.appendChild(x);
+
+        QDomElement y = doc.createElement("attribute");
+        y.setAttribute("key","y");
+        y.setAttribute("type","double");
+        y.appendChild(doc.createTextNode(QString::asprintf("%d",j * 50)));
+        graphics.appendChild(y);
+
+        QDomElement w = doc.createElement("attribute");
+        w.setAttribute("key","w");
+        w.setAttribute("type","double");
+        w.appendChild(doc.createTextNode(QString::asprintf("%d", 50)));
+        graphics.appendChild(w);
+
+        QDomElement h = doc.createElement("attribute");
+        h.setAttribute("key","h");
+        h.setAttribute("type","double");
+        h.appendChild(doc.createTextNode(QString::asprintf("%d", 50)));
+        graphics.appendChild(h);
+
+        QDomElement formType = doc.createElement("attribute");
+        formType.setAttribute("key","type");
+        formType.setAttribute("type","String");
+        formType.appendChild(doc.createTextNode(shapeType));
+        graphics.appendChild(formType);
+
+        QDomElement raisedBorder = doc.createElement("attribute");
+        raisedBorder.setAttribute("key","raisedBorder");
+        raisedBorder.setAttribute("type","boolean");
+        raisedBorder.appendChild(doc.createTextNode("false"));
+        graphics.appendChild(raisedBorder);
+
+        QDomElement fill = doc.createElement("attribute");
+        fill.setAttribute("key","fill");
+        fill.setAttribute("type","String");
+        fill.appendChild(doc.createTextNode("#FFCC00"));
+        graphics.appendChild(fill);
+
+        QDomElement outline = doc.createElement("attribute");
+        outline.setAttribute("key","outline");
+        outline.setAttribute("type","String");
+        outline.appendChild(doc.createTextNode("#000000"));
+        graphics.appendChild(outline);
+
+    square.appendChild(graphics);
+
+
+    QDomElement LabelGraphics = doc.createElement("section");
+    LabelGraphics.setAttribute("name","LabelGraphics");
+    square.appendChild(LabelGraphics);
+
+    return square;
+}
+
+void MainWindow::on_btn_dummyGrid_clicked()
+{
+    for(int i=0; i < 11; i++)
+        for(int j=0; j < 11; j++)
+            ThreadAnalize::grid[i][j] = -1;
+
+    ThreadAnalize::grid[5][5] = 4;
+    ThreadAnalize::grid[6][5] = 3;
+    ThreadAnalize::grid[7][5] = 6;
+    ThreadAnalize::grid[7][6] = 1;
+    ThreadAnalize::grid[7][7] = 5;
+}
+
+int MainWindow::getIdGivenXY(int x,int y){
+    for(int i=0;i<this->holder.size();i++){
+        if(holder[i].x == x && holder[i].y==y)
+            return holder[i].id;
+    }
+    return -1;
 }

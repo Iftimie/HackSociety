@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui xml
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -16,13 +16,13 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     threadwebcam.cpp \
     threadanalize.cpp \
+    Cost.cpp \
     MyLabel.cpp \
     Neural_Armadillo.cpp \
-    Cost.cpp \
     threadtrainer.cpp
 
-INCLUDEPATH +=C:/OpenCV2410/opencv/build/include
-LIBS +=-LC:/OpenCV2410/opencv/build/x64/vc12/lib \
+INCLUDEPATH +=E:/programs/opencv/opencv/build/include
+LIBS +=-LE:/programs/opencv/opencv/build/x64/vc12/lib \
 opencv_calib3d2410d.lib \
 opencv_contrib2410d.lib \
 opencv_core2410d.lib \
@@ -43,17 +43,17 @@ opencv_ts2410d.lib \
 opencv_video2410d.lib \
 opencv_videostab2410d.lib
 
-INCLUDEPATH +=C:/Armadillo/include
-LIBS +=-LC:/Armadillo/examples/lib_win64 \
+INCLUDEPATH +=E:/programs/Armadillo/include
+LIBS +=-LE:/programs/Armadillo/examples/lib_win64 \
 blas_win64_MT.lib \
 lapack_win64_MT.lib
 
 HEADERS  += mainwindow.h \
     threadwebcam.h \
     threadanalize.h \
+    Cost.h \
     MyLabel.h \
     Neural_Armadillo.h \
-    Cost.h \
     threadtrainer.h
 
 FORMS    += mainwindow.ui

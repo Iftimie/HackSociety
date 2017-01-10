@@ -7,6 +7,10 @@
 #include "threadanalize.h"
 #include "Neural_Armadillo.h"
 #include "threadtrainer.h"
+#include <QtXml>
+#include <vector>
+using namespace std;
+
 using namespace cv;
 
 namespace Ui {
@@ -98,6 +102,10 @@ private slots:
 
     void on_loadNetwork_clicked();
 
+    void on_btn_xml_clicked();
+
+    void on_btn_dummyGrid_clicked();
+
 private:
     Ui::MainWindow *ui;
     ThreadWebCam *threadWebcam;
@@ -120,6 +128,27 @@ private:
     cv::Mat fromPointsToMat();
     void findClass(int resultClass,char * result);
     void repaintFlowchart();
+
+    QDomElement getShape(int i, int j, int id, QString shapeType, QDomDocument doc);
+    QDomElement getLine(int sourceId, int targetId, QDomDocument doc);
+
+public:
+    class ShapeHolder{
+    public:
+        int x,y,id;
+        ShapeHolder(int x, int y, int id)
+        {
+            this->x = x;
+            this->y = y;
+            this->id = id;
+        }
+    };
+
+
+
+    vector<ShapeHolder> holder;
+
+    int getIdGivenXY(int x,int y);
 };
 
 #endif // MAINWINDOW_H

@@ -21,7 +21,7 @@ int ThreadAnalize::currentPositionY=5;
 int ThreadAnalize::touchPosition=20;
 
 ThreadAnalize::ThreadAnalize(QObject *parent):QThread(parent){
-    this->settingPosition=true;
+    this->settingPosition=false;
     for(int i=0;i<11;i++){
         for(int j=0;j<11;j++){
             grid[i][j]=-1;
@@ -115,18 +115,26 @@ void ThreadAnalize::findBiggestBlob(cv::Mat & matImage,cv::Rect &bounding_rect){
 
 void ThreadAnalize::nextPosition(int x,int y,int width,int height){
     if(y<40 && x>40 && x<width-80 && this->settingPosition==false){
+        if (firstRun == true)
+        {
+            this->settingPosition=true;
+            firstRun = false;
+        }
+        else
+        {
         currentPositionY--;//top
         this->settingPosition=true;
+        }
     }else if(y>height-80 && x>40 && x<width-80  && this->settingPosition==false){
         currentPositionY++ ;//down
         this->settingPosition=true;
     }else if(x<40 && y > 40 && y<height-80  && this->settingPosition==false){
-        currentPositionX--;//left
+        currentPositionX++;//left
         this->settingPosition=true;
     }else if(x>width-80 && y > 40 && y<height-80  && this->settingPosition==false){
-        currentPositionX++;//down
+        currentPositionX--;//down
         this->settingPosition=true;
-    }else if(y>40 && y<height-80 && x >40 && x<width-80  && this->settingPosition==false){
+    }else if(y>40 && y<height-80 && x >40 && x<width-80 ){
         settingPosition=false;
     }
     if(currentPositionX>=11)
@@ -137,7 +145,7 @@ void ThreadAnalize::nextPosition(int x,int y,int width,int height){
         currentPositionY=10;
     if(currentPositionY<0)
         currentPositionY=0;
-    qDebug()<<currentPositionX<<" "<<currentPositionY;
+    //qDebug()<<currentPositionX<<" "<<currentPositionY;
 }
 
  void ThreadAnalize::touch(int x,int y,int width,int height){

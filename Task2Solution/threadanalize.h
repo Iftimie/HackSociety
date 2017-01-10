@@ -12,6 +12,7 @@ using namespace cv;
 class ThreadAnalize : public QThread{
     Q_OBJECT
 public:
+    bool firstRun = true;
     static bool running;
     static int minH;
     static int maxH;
@@ -26,6 +27,7 @@ public:
     static char grid[11][11];
     static int currentPositionX;
     static int currentPositionY;
+
     static int touchPosition;
     bool settingPosition;
 
