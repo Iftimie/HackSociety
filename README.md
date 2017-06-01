@@ -5,6 +5,7 @@ The application was implemented in C++ using OpenCV library and our own implemen
 
 Here is a
 [demo](https://www.youtube.com/watch?v=95EHXfA_C2Q)
+[![Everything Is AWESOME](https://img.youtube.com/vi/95EHXfA_C2Q/0.jpg)](https://www.youtube.com/watch?v=95EHXfA_C2Q "demo")
 More detais found [here](https://blog.danlucian.net/we-won-hacksociety-mlh-event/)
 We also received first prize at our section.
 ![image](https://blog.danlucian.net/content/images/2017/02/img2.jpg)
